@@ -35,6 +35,21 @@ export class CdkStack extends cdk.Stack {
       ]
     })
 
+    // DynamoDB
+    const dynamodbTable = new dynamodb.Table(this, "monitoring-dynamodb-table", {
+      tableName: `${props.projectName}-monitoring-table`,
+      partitionKey: {
+        name: "id",
+        type: dynamodb.AttributeType.STRING,
+      },
+      sortKey: {
+        name: "last_edited_time",
+        type: dynamodb.AttributeType.STRING,
+      },
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,  // On-demand request
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+    })
+
     // Lambda
     const pythonPackagePath = "../src/" + props.projectName.replace(/-/g, "_");
     const duration = Math.min(900, props.intervalMinutes * 60);
@@ -61,7 +76,8 @@ export class CdkStack extends cdk.Stack {
       role: iamRoleForWebhooks,
       environment: {
         "LOGLEVEL": "INFO",
-        "INTEGRATION_URL": "https://example.com"
+        "INTEGRATION_URL": "https://example.com",
+        "TABLE_NAME": dynamodbTable.tableName,
       }
     })
 
@@ -75,21 +91,6 @@ export class CdkStack extends cdk.Stack {
           DATABASE_ID: "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
         })
       })]
-    })
-
-    // DynamoDB
-    new dynamodb.Table(this, "monitoring-dynamodb-table", {
-      tableName: `${props.projectName}-monitoring-table`,
-      partitionKey: {
-        name: "id",
-        type: dynamodb.AttributeType.STRING,
-      },
-      sortKey: {
-        name: "last_edited_time",
-        type: dynamodb.AttributeType.STRING,
-      },
-      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,  // On-demand request
-      removalPolicy: cdk.RemovalPolicy.DESTROY,
     })
   }
 }
