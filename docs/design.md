@@ -2,9 +2,16 @@
 
 ## Data definition
 
-Dynamodb stores the individual [Page][notion-api-1] object acquired in [Notion API (Query A database)][notion-api-2].
-The object has `id` as the primary key as follows.
+The items of DynamoDB are as follows.
 
+| No. | name | description |
+| --- | ---- | ----------- |
+| 1   | id(PK)| Page ID |
+| 2   | last_edited_time | The datetime when the page was updated |
+| 3   | page_info | [Page][notion-api-1] object(JSON string) |
+
+`page_info` is the individual [Page][notion-api-1] object acquired in [Notion API (Query A database)][notion-api-2].
+It is JSON String like the following.
 ```json
 {
     "object": "page",
