@@ -23,6 +23,8 @@ build-backend = "hatchling.build"
 managed = true
 dev-dependencies = [
     "moto>=4.2.12",
+    "pytest-mock>=3.12.0",
+    "freezegun>=1.4.0",
 ]
 
 [tool.hatch.metadata]
