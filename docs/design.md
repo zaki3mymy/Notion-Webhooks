@@ -1,3 +1,5 @@
+# Design notes
+
 ## Data definition
 
 Dynamodb stores the individual [Page][notion-api-1] object acquired in [Notion API (Query A database)][notion-api-2].
