@@ -10,6 +10,7 @@ dependencies = [
     "isort>=5.13.2",
     "black>=23.12.1",
     "pytest>=7.4.4",
+    "boto3>=1.34.13",
 ]
 readme = "README.md"
 requires-python = ">= 3.8"
@@ -20,7 +21,11 @@ build-backend = "hatchling.build"
 
 [tool.rye]
 managed = true
-dev-dependencies = []
+dev-dependencies = [
+    "moto>=4.2.12",
+    "pytest-mock>=3.12.0",
+    "freezegun>=1.4.0",
+]
 
 [tool.hatch.metadata]
 allow-direct-references = true
