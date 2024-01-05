@@ -78,7 +78,7 @@ The POST data sent from Lambda (webhooks) to Other System is as follows.
 | 1   | id   | Page ID     |
 | 2   | last_edited_time | The datetime when the page was updated |
 | 3   | added | Properties added to the database |
-| 4   | updated | The part where there was a difference in the page |
+| 4   | changed | The part where there was a difference in the page |
 | 5   | deleted | Properties deleted from the database |
 
 No.3 to 5 is part of [Page][notion-api-1] objects.
@@ -101,7 +101,7 @@ For example...
             }
         }
     },
-    "updated": {
+    "changed": {
         "icon": {
             "type": "emoji",
             "emoji": "🐞"
