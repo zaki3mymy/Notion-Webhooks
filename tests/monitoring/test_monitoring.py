@@ -2,7 +2,7 @@ import json
 
 import pytest
 from freezegun import freeze_time
-from pytest_mock.plugin import MockerFixture
+from pytest_mock import MockerFixture
 
 from monitoring.lambda_handler import lambda_function
 
