@@ -1,0 +1,32 @@
+[project]
+name = "notion-automation-trigger"
+version = "0.1.0"
+description = "Add your description here"
+authors = [
+    { name = "zaki3mymy", email = "zaki.last@gmail.com" }
+]
+dependencies = [
+    "flake8>=5.0.4",
+    "isort>=5.13.2",
+    "black>=23.12.1",
+    "pytest>=7.4.4",
+]
+readme = "README.md"
+requires-python = ">= 3.8"
+
+[project.scripts]
+hello = "notion-automation-trigger:hello"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.rye]
+managed = true
+dev-dependencies = []
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/notion_automation_trigger"]
