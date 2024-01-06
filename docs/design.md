@@ -102,18 +102,37 @@ For example...
         }
     },
     "changed": {
-        "icon": {
-            "type": "emoji",
-            "emoji": "🐞"
+        "old": {
+            "icon": {
+                "type": "emoji",
+                "emoji": "🐞"
+            },
+            "properties": {
+                "Due date": {
+                    "id": "M%3BBw",
+                    "type": "date",
+                    "date": {
+                        "start": "2023-01-23",
+                        "end": null,
+                        "time_zone": null
+                    }
+                }
+            }
         },
-        "properties": {
-            "Due date": {
-                "id": "M%3BBw",
-                "type": "date",
-                "date": {
-                    "start": "2023-02-23",
-                    "end": null,
-                    "time_zone": null
+        "new": {
+            "icon": {
+                "type": "emoji",
+                "emoji": "🕷"
+            },
+            "properties": {
+                "Due date": {
+                    "id": "M%3BBw",
+                    "type": "date",
+                    "date": {
+                        "start": "2023-02-23",
+                        "end": null,
+                        "time_zone": null
+                    }
                 }
             }
         }
