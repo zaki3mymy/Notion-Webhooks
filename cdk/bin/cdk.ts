@@ -23,4 +23,5 @@ new CdkStack(app, `${projectName}-stack`, {
   /* For more information, see https://docs.aws.amazon.com/cdk/latest/guide/environments.html */
   projectName,
   intervalMinutes,
+  notionSecretKey: process.env.NOTION_SECRET_KEY,
 });

@@ -9,11 +9,17 @@ import { Construct } from 'constructs';
 export interface CustomizedProps extends cdk.StackProps {
   projectName: string;
   intervalMinutes: number;
+  notionSecretKey: string | undefined;
 }
 
 export class CdkStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: CustomizedProps) {
     super(scope, id, props);
+
+    // Confirmation of environment variables
+    if (props.notionSecretKey == undefined) {
+      throw new Error("Environmental variable NOTION_SECRET_KEY is not set.");
+    }
 
     // IAM
     const iamRoleForMonitoring = new iam.Role(this, "iam-role-lambda-monitoring", {
