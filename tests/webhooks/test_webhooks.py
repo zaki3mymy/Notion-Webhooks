@@ -277,6 +277,362 @@ def test_change_property_from_prev_info(mock_urllib_request_urlopen):
     assert event == json.loads(act)
 
 
+def test_change_property_which_added_multi_select(mock_urllib_request_urlopen):
+    # prepare
+    page_id = "d2b8393e-2817-4009-8311-57f9dcac0185"
+    last_edited_time = "2024-01-05T03:58:00.000Z"
+
+    prev_info = create_page_info(page_id, "2024-01-05T00:00:00.000Z")
+    client = boto3.client("dynamodb")
+    client.put_item(
+        TableName=TABLE_NAME,
+        Item={
+            "id": {"S": page_id},
+            "last_edited_time": {"S": last_edited_time},
+            "page_info": {"S": json.dumps(prev_info)},
+        },
+    )
+
+    mock_urlopen = mock_urllib_request_urlopen()
+
+    event = json.loads(json.dumps(prev_info))
+    event["last_edited_time"] = last_edited_time
+    event["properties"]["Category"]["multi_select"].append(  # changed property
+        {
+            "id": "t|O@",
+            "name": "comic",
+            "color": "yellow",
+        },
+    )
+
+    # execute
+    lambda_function(event, {})
+
+    # verify
+    args = mock_urlopen.call_args.args
+    act_req: urllib.request.Request = args[0]
+    act_req_body = json.loads(act_req.data.decode("utf-8"))
+    exp_req_body = {
+        "id": page_id,
+        "last_edited_time": last_edited_time,
+        "added": {},
+        "changed": {
+            "old": {
+                "properties": {
+                    "Category": {
+                        "multi_select": [],
+                    },
+                }
+            },
+            "new": {
+                "properties": {
+                    "Category": {
+                        "multi_select": [
+                            {
+                                "id": "t|O@",
+                                "name": "comic",
+                                "color": "yellow",
+                            }
+                        ],
+                    },
+                }
+            },
+        },
+        "deleted": {},
+    }
+    assert exp_req_body == act_req_body
+
+    # assert saved page
+    ret = client.get_item(
+        TableName=TABLE_NAME,
+        Key={
+            "id": {"S": event["id"]},
+        },
+    )
+    item = ret["Item"]
+    act = item["page_info"]["S"]
+    assert event == json.loads(act)
+
+
+def test_change_property_which_added_multi_select_2(
+    mock_urllib_request_urlopen,
+):
+    # prepare
+    page_id = "d2b8393e-2817-4009-8311-57f9dcac0185"
+    last_edited_time = "2024-01-05T03:58:00.000Z"
+
+    prev_info = create_page_info(page_id, "2024-01-05T00:00:00.000Z")
+    prev_info["properties"]["Category"]["multi_select"] = [
+        {
+            "id": "{Ml\\",
+            "name": "anime",
+            "color": "red",
+        }
+    ]
+    client = boto3.client("dynamodb")
+    client.put_item(
+        TableName=TABLE_NAME,
+        Item={
+            "id": {"S": page_id},
+            "last_edited_time": {"S": last_edited_time},
+            "page_info": {"S": json.dumps(prev_info)},
+        },
+    )
+
+    mock_urlopen = mock_urllib_request_urlopen()
+
+    event = json.loads(json.dumps(prev_info))
+    event["last_edited_time"] = last_edited_time
+    event["properties"]["Category"]["multi_select"].append(  # changed property
+        {
+            "id": "t|O@",
+            "name": "comic",
+            "color": "yellow",
+        },
+    )
+
+    # execute
+    lambda_function(event, {})
+
+    # verify
+    args = mock_urlopen.call_args.args
+    act_req: urllib.request.Request = args[0]
+    act_req_body = json.loads(act_req.data.decode("utf-8"))
+    exp_req_body = {
+        "id": page_id,
+        "last_edited_time": last_edited_time,
+        "added": {},
+        "changed": {
+            "old": {
+                "properties": {
+                    "Category": {
+                        "multi_select": [
+                            {
+                                "id": "{Ml\\",
+                                "name": "anime",
+                                "color": "red",
+                            }
+                        ],
+                    },
+                }
+            },
+            "new": {
+                "properties": {
+                    "Category": {
+                        "multi_select": [
+                            {
+                                "id": "{Ml\\",
+                                "name": "anime",
+                                "color": "red",
+                            },
+                            {
+                                "id": "t|O@",
+                                "name": "comic",
+                                "color": "yellow",
+                            },
+                        ],
+                    },
+                }
+            },
+        },
+        "deleted": {},
+    }
+    assert exp_req_body == act_req_body
+
+    # assert saved page
+    ret = client.get_item(
+        TableName=TABLE_NAME,
+        Key={
+            "id": {"S": event["id"]},
+        },
+    )
+    item = ret["Item"]
+    act = item["page_info"]["S"]
+    assert event == json.loads(act)
+
+
+def test_change_property_which_deleted_multi_select(
+    mock_urllib_request_urlopen,
+):
+    # prepare
+    page_id = "d2b8393e-2817-4009-8311-57f9dcac0185"
+    last_edited_time = "2024-01-05T03:58:00.000Z"
+
+    prev_info = create_page_info(page_id, "2024-01-05T00:00:00.000Z")
+    prev_info["properties"]["Category"]["multi_select"] = [
+        {
+            "id": "{Ml\\",
+            "name": "anime",
+            "color": "red",
+        }
+    ]
+    client = boto3.client("dynamodb")
+    client.put_item(
+        TableName=TABLE_NAME,
+        Item={
+            "id": {"S": page_id},
+            "last_edited_time": {"S": last_edited_time},
+            "page_info": {"S": json.dumps(prev_info)},
+        },
+    )
+
+    mock_urlopen = mock_urllib_request_urlopen()
+
+    event = json.loads(json.dumps(prev_info))
+    event["last_edited_time"] = last_edited_time
+    event["properties"]["Category"]["multi_select"] = []  # changed property
+
+    # execute
+    lambda_function(event, {})
+
+    # verify
+    args = mock_urlopen.call_args.args
+    act_req: urllib.request.Request = args[0]
+    act_req_body = json.loads(act_req.data.decode("utf-8"))
+    exp_req_body = {
+        "id": page_id,
+        "last_edited_time": last_edited_time,
+        "added": {},
+        "changed": {
+            "old": {
+                "properties": {
+                    "Category": {
+                        "multi_select": [
+                            {
+                                "id": "{Ml\\",
+                                "name": "anime",
+                                "color": "red",
+                            }
+                        ],
+                    },
+                }
+            },
+            "new": {
+                "properties": {
+                    "Category": {
+                        "multi_select": [],
+                    },
+                }
+            },
+        },
+        "deleted": {},
+    }
+    assert exp_req_body == act_req_body
+
+    # assert saved page
+    ret = client.get_item(
+        TableName=TABLE_NAME,
+        Key={
+            "id": {"S": event["id"]},
+        },
+    )
+    item = ret["Item"]
+    act = item["page_info"]["S"]
+    assert event == json.loads(act)
+
+
+def test_change_property_which_deleted_multi_select_2(
+    mock_urllib_request_urlopen,
+):
+    # prepare
+    page_id = "d2b8393e-2817-4009-8311-57f9dcac0185"
+    last_edited_time = "2024-01-05T03:58:00.000Z"
+
+    prev_info = create_page_info(page_id, "2024-01-05T00:00:00.000Z")
+    prev_info["properties"]["Category"]["multi_select"] = [
+        {
+            "id": "{Ml\\",
+            "name": "anime",
+            "color": "red",
+        },
+        {
+            "id": "t|O@",
+            "name": "comic",
+            "color": "yellow",
+        },
+    ]
+    client = boto3.client("dynamodb")
+    client.put_item(
+        TableName=TABLE_NAME,
+        Item={
+            "id": {"S": page_id},
+            "last_edited_time": {"S": last_edited_time},
+            "page_info": {"S": json.dumps(prev_info)},
+        },
+    )
+
+    mock_urlopen = mock_urllib_request_urlopen()
+
+    event = json.loads(json.dumps(prev_info))
+    event["last_edited_time"] = last_edited_time
+    event["properties"]["Category"]["multi_select"] = [  # changed property
+        {
+            "id": "t|O@",
+            "name": "comic",
+            "color": "yellow",
+        },
+    ]
+
+    # execute
+    lambda_function(event, {})
+
+    # verify
+    args = mock_urlopen.call_args.args
+    act_req: urllib.request.Request = args[0]
+    act_req_body = json.loads(act_req.data.decode("utf-8"))
+    exp_req_body = {
+        "id": page_id,
+        "last_edited_time": last_edited_time,
+        "added": {},
+        "changed": {
+            "old": {
+                "properties": {
+                    "Category": {
+                        "multi_select": [
+                            {
+                                "id": "{Ml\\",
+                                "name": "anime",
+                                "color": "red",
+                            },
+                            {
+                                "id": "t|O@",
+                                "name": "comic",
+                                "color": "yellow",
+                            },
+                        ],
+                    },
+                }
+            },
+            "new": {
+                "properties": {
+                    "Category": {
+                        "multi_select": [
+                            {
+                                "id": "t|O@",
+                                "name": "comic",
+                                "color": "yellow",
+                            },
+                        ],
+                    },
+                }
+            },
+        },
+        "deleted": {},
+    }
+    assert exp_req_body == act_req_body
+
+    # assert saved page
+    ret = client.get_item(
+        TableName=TABLE_NAME,
+        Key={
+            "id": {"S": event["id"]},
+        },
+    )
+    item = ret["Item"]
+    act = item["page_info"]["S"]
+    assert event == json.loads(act)
+
+
 def test_delete_property_from_prev_info(mock_urllib_request_urlopen):
     # prepare
     page_id = "d2b8393e-2817-4009-8311-57f9dcac0185"

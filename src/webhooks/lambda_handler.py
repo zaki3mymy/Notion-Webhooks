@@ -48,11 +48,23 @@ def _generate_diff_dict(
     current = input_dict_
 
     cur = result
+    prev = cur
+    logger.debug("cur: %s", cur)
+    logger.debug("input_dict_: %s", input_dict_)
     for p in path:
         if p != path[-1]:
+            prev = cur
             cur = cur[p]
+            logger.debug("cur : %s", cur)
+            logger.debug("prev: %s", prev)
         else:
-            cur[p] = diff[value_key]
+            if isinstance(p, str):
+                cur[p] = diff[value_key]
+            else:
+                prev_p = path[-2]
+                prev[prev_p] = input_dict_
+                if 0 < len(input_dict_) < p:
+                    prev[prev_p][p] = diff[value_key]
 
     return result
 
@@ -100,6 +112,12 @@ def take_diff_in_page_info(prev_info, current_info):
         # changed
         if action == "values_changed":
             old_dic = _generate_diff_dict(prev_info, diff, "old_value")
+
+            result["changed"]["new"] = result["changed"]["new"] | dic
+            result["changed"]["old"] = result["changed"]["old"] | old_dic
+        elif action in ["iterable_item_added", "iterable_item_removed"]:
+            logger.debug("generate old diff dict...")
+            old_dic = _generate_diff_dict(prev_info, diff, "value")
 
             result["changed"]["new"] = result["changed"]["new"] | dic
             result["changed"]["old"] = result["changed"]["old"] | old_dic
