@@ -51,14 +51,13 @@ export class CdkStack extends cdk.Stack {
     })
 
     // Lambda
-    const pythonPackagePath = "../src/" + props.projectName.replace(/-/g, "_");
     const duration = Math.min(900, props.intervalMinutes * 60);
 
     const lambdaMonitoring = new lambda.Function(this, "lambda-monitoring", {
       functionName: `${props.projectName}-monitoring-lambda`,
       runtime: lambda.Runtime.PYTHON_3_12,
       timeout: cdk.Duration.seconds(duration),
-      code: lambda.Code.fromAsset(pythonPackagePath),
+      code: lambda.Code.fromAsset("../src/monitoring"),
       handler: "lambda_handler.lambda_function",
       role: iamRoleForMonitoring,
       environment: {
@@ -71,7 +70,7 @@ export class CdkStack extends cdk.Stack {
       functionName: `${props.projectName}-webhooks-lambda`,
       runtime: lambda.Runtime.PYTHON_3_12,
       timeout: cdk.Duration.seconds(duration),
-      code: lambda.Code.fromAsset(pythonPackagePath),
+      code: lambda.Code.fromAsset("../src/webhooks"),
       handler: "lambda_handler.lambda_function",
       role: iamRoleForWebhooks,
       environment: {
