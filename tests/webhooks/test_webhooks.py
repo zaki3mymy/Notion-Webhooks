@@ -6,7 +6,7 @@ import pytest
 from moto import mock_dynamodb
 from pytest_mock import MockerFixture
 
-from webhooks.lambda_handler import fetch_prev_page_info, lambda_function
+from webhooks.lambda_handler import lambda_function
 
 INTEGRATION_URL = "https://example.com"
 TABLE_NAME = "monitoring-table"
