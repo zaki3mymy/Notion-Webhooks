@@ -50,22 +50,15 @@ export class CdkStack extends cdk.Stack {
       removalPolicy: cdk.RemovalPolicy.DESTROY,
     })
 
-    // Lambda
-    const duration = Math.min(900, props.intervalMinutes * 60);
-
-    const lambdaMonitoring = new lambda.Function(this, "lambda-monitoring", {
-      functionName: `${props.projectName}-monitoring-lambda`,
-      runtime: lambda.Runtime.PYTHON_3_12,
-      timeout: cdk.Duration.seconds(duration),
-      code: lambda.Code.fromAsset("../src/monitoring"),
-      handler: "lambda_handler.lambda_function",
-      role: iamRoleForMonitoring,
-      environment: {
-        "LOGLEVEL": "INFO",
-        "SECRET_KEY": "secret_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
-        "INTERVAL_MINUTES": String(props.intervalMinutes),
-      }
+    // Lambda Layer
+    const lambdaLayer = new lambda.LayerVersion(this, "lambda-layer", {
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+      code: lambda.Code.fromAsset("../lib"),
+      compatibleRuntimes: [lambda.Runtime.PYTHON_3_12]
     })
+
+    // Lambda Function
+    const duration = Math.min(900, props.intervalMinutes * 60);
     const lambdaWebhooks = new lambda.Function(this, "lambda-webhooks", {
       functionName: `${props.projectName}-webhooks-lambda`,
       runtime: lambda.Runtime.PYTHON_3_12,
@@ -77,6 +70,21 @@ export class CdkStack extends cdk.Stack {
         "LOGLEVEL": "INFO",
         "INTEGRATION_URL": "https://example.com",
         "TABLE_NAME": dynamodbTable.tableName,
+      },
+      layers: [lambdaLayer]
+    })
+    const lambdaMonitoring = new lambda.Function(this, "lambda-monitoring", {
+      functionName: `${props.projectName}-monitoring-lambda`,
+      runtime: lambda.Runtime.PYTHON_3_12,
+      timeout: cdk.Duration.seconds(duration),
+      code: lambda.Code.fromAsset("../src/monitoring"),
+      handler: "lambda_handler.lambda_function",
+      role: iamRoleForMonitoring,
+      environment: {
+        "LOGLEVEL": "INFO",
+        "SECRET_KEY": "secret_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+        "INTERVAL_MINUTES": String(props.intervalMinutes),
+        "LAMBDA_NAME_WEBHOOKS": lambdaWebhooks.functionName,
       }
     })
 
