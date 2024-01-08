@@ -109,8 +109,6 @@ For example...
             },
             "properties": {
                 "Due date": {
-                    "id": "M%3BBw",
-                    "type": "date",
                     "date": {
                         "start": "2023-01-23",
                         "end": null,
@@ -126,8 +124,6 @@ For example...
             },
             "properties": {
                 "Due date": {
-                    "id": "M%3BBw",
-                    "type": "date",
                     "date": {
                         "start": "2023-02-23",
                         "end": null,
