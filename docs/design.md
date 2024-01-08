@@ -1,8 +1,17 @@
+# Design notes
+
 ## Data definition
 
-Dynamodb stores the individual [Page][notion-api-1] object acquired in [Notion API (Query A database)][notion-api-2].
-The object has `id` as the primary key as follows.
+The items of DynamoDB are as follows.
 
+| No. | name | description |
+| --- | ---- | ----------- |
+| 1   | id(PK)| Page ID |
+| 2   | last_edited_time | The datetime when the page was updated |
+| 3   | page_info | [Page][notion-api-1] object(JSON string) |
+
+`page_info` is the individual [Page][notion-api-1] object acquired in [Notion API (Query A database)][notion-api-2].
+It is JSON String like the following.
 ```json
 {
     "object": "page",
@@ -69,7 +78,7 @@ The POST data sent from Lambda (webhooks) to Other System is as follows.
 | 1   | id   | Page ID     |
 | 2   | last_edited_time | The datetime when the page was updated |
 | 3   | added | Properties added to the database |
-| 4   | updated | The part where there was a difference in the page |
+| 4   | changed | The part where there was a difference in the page |
 | 5   | deleted | Properties deleted from the database |
 
 No.3 to 5 is part of [Page][notion-api-1] objects.
@@ -92,19 +101,38 @@ For example...
             }
         }
     },
-    "updated": {
-        "icon": {
-            "type": "emoji",
-            "emoji": "🐞"
+    "changed": {
+        "old": {
+            "icon": {
+                "type": "emoji",
+                "emoji": "🐞"
+            },
+            "properties": {
+                "Due date": {
+                    "id": "M%3BBw",
+                    "type": "date",
+                    "date": {
+                        "start": "2023-01-23",
+                        "end": null,
+                        "time_zone": null
+                    }
+                }
+            }
         },
-        "properties": {
-            "Due date": {
-                "id": "M%3BBw",
-                "type": "date",
-                "date": {
-                    "start": "2023-02-23",
-                    "end": null,
-                    "time_zone": null
+        "new": {
+            "icon": {
+                "type": "emoji",
+                "emoji": "🕷"
+            },
+            "properties": {
+                "Due date": {
+                    "id": "M%3BBw",
+                    "type": "date",
+                    "date": {
+                        "start": "2023-02-23",
+                        "end": null,
+                        "time_zone": null
+                    }
                 }
             }
         }
