@@ -5,6 +5,7 @@ import * as targets from 'aws-cdk-lib/aws-events-targets';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import { Construct } from 'constructs';
+import { existsSync } from 'fs';
 
 export interface CustomizedProps extends cdk.StackProps {
   projectName: string;
@@ -19,6 +20,10 @@ export class CdkStack extends cdk.Stack {
     // Confirmation of environment variables
     if (props.notionSecretKey == undefined) {
       throw new Error("Environmental variable NOTION_SECRET_KEY is not set.");
+    }
+    // Check the existence of dependency libraries
+    if (!existsSync("../lib/python/")) {
+      throw new Error("Python's dependent library is not found. Please install into `../lib/python`.");
     }
 
     //////// Common
