@@ -113,14 +113,14 @@ def take_diff_in_page_info(prev_info, current_info):
         if action == "values_changed":
             old_dic = _generate_diff_dict(prev_info, diff, "old_value")
 
-            result["changed"]["new"] = result["changed"]["new"] | dic
             result["changed"]["old"] = result["changed"]["old"] | old_dic
+            result["changed"]["new"] = result["changed"]["new"] | dic
         elif action in ["iterable_item_added", "iterable_item_removed"]:
             logger.debug("generate old diff dict...")
             old_dic = _generate_diff_dict(prev_info, diff, "value")
 
-            result["changed"]["new"] = result["changed"]["new"] | dic
             result["changed"]["old"] = result["changed"]["old"] | old_dic
+            result["changed"]["new"] = result["changed"]["new"] | dic
 
         # deleted
         if action == "dictionary_item_removed":
@@ -137,7 +137,7 @@ def save_page_info(page_id: str, page_info: Dict[str, Any]):
         Item={
             "id": {"S": page_id},
             "last_edited_time": {"S": last_edited_time},
-            "page_info": {"S": json.dumps(page_info)},
+            "page_info": {"S": json.dumps(page_info, ensure_ascii=False)},
         },
     )
 
@@ -148,7 +148,9 @@ def send_difference(url, body):
     headers = {
         "Content-Type": "application/json",
     }
-    req = urllib.request.Request(url, json.dumps(body).encode(), headers)
+    req = urllib.request.Request(
+        url, json.dumps(body, ensure_ascii=False).encode(), headers
+    )
     with urllib.request.urlopen(req):
         # Ignore the response because the purpose is to send a difference.
         pass

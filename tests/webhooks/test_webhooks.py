@@ -87,8 +87,8 @@ def create_page_info(page_id, last_edited_time):
                     {
                         "type": "text",
                         "text": {
-                            "content": "bbb",
-                            "lin": None,
+                            "content": "テストページ",  # for ensure_ascii
+                            "link": None,
                         },
                         "annotations": {
                             "bold": False,
@@ -98,7 +98,7 @@ def create_page_info(page_id, last_edited_time):
                             "code": False,
                             "color": "default",
                         },
-                        "plain_text": "bbb",
+                        "plain_text": "テストページ",  # for ensure_ascii
                         "href": None,
                     },
                 ],
@@ -134,7 +134,7 @@ def test_no_prev_info(mock_urllib_request_urlopen):
     )
     item = ret["Item"]
     act = item["page_info"]["S"]
-    assert event == json.loads(act)
+    assert json.dumps(event, ensure_ascii=False) == act
 
 
 def test_add_property_from_prev_info(mock_urllib_request_urlopen):
@@ -162,7 +162,7 @@ def test_add_property_from_prev_info(mock_urllib_request_urlopen):
         "type": "status",
         "status": {
             "id": "86ddb6ec-0627-47f8-800d-b65afd28be13",
-            "name": "Not started",
+            "name": "未実施",  # for ensure_ascii
             "color": "default",
         },
     }
@@ -173,8 +173,8 @@ def test_add_property_from_prev_info(mock_urllib_request_urlopen):
     # verify
     args = mock_urlopen.call_args.args
     act_req: urllib.request.Request = args[0]
-    act_req_body = json.loads(act_req.data.decode("utf-8"))
-    exp_req_body = {
+    act_req_body = act_req.data.decode("utf-8")
+    exp_req = {
         "id": page_id,
         "last_edited_time": last_edited_time,
         "added": {
@@ -184,7 +184,7 @@ def test_add_property_from_prev_info(mock_urllib_request_urlopen):
                     "type": "status",
                     "status": {
                         "id": "86ddb6ec-0627-47f8-800d-b65afd28be13",
-                        "name": "Not started",
+                        "name": "未実施",
                         "color": "default",
                     },
                 }
@@ -193,6 +193,7 @@ def test_add_property_from_prev_info(mock_urllib_request_urlopen):
         "changed": {},
         "deleted": {},
     }
+    exp_req_body = json.dumps(exp_req, ensure_ascii=False)
     assert exp_req_body == act_req_body
 
     # assert saved page
@@ -204,7 +205,7 @@ def test_add_property_from_prev_info(mock_urllib_request_urlopen):
     )
     item = ret["Item"]
     act = item["page_info"]["S"]
-    assert event == json.loads(act)
+    assert json.dumps(event, ensure_ascii=False) == act
 
 
 def test_change_property_from_prev_info(mock_urllib_request_urlopen):
@@ -240,8 +241,8 @@ def test_change_property_from_prev_info(mock_urllib_request_urlopen):
     # verify
     args = mock_urlopen.call_args.args
     act_req: urllib.request.Request = args[0]
-    act_req_body = json.loads(act_req.data.decode("utf-8"))
-    exp_req_body = {
+    act_req_body = act_req.data.decode("utf-8")
+    exp_req = {
         "id": page_id,
         "last_edited_time": last_edited_time,
         "added": {},
@@ -263,6 +264,7 @@ def test_change_property_from_prev_info(mock_urllib_request_urlopen):
         },
         "deleted": {},
     }
+    exp_req_body = json.dumps(exp_req, ensure_ascii=False)
     assert exp_req_body == act_req_body
 
     # assert saved page
@@ -274,7 +276,7 @@ def test_change_property_from_prev_info(mock_urllib_request_urlopen):
     )
     item = ret["Item"]
     act = item["page_info"]["S"]
-    assert event == json.loads(act)
+    assert json.dumps(event, ensure_ascii=False) == act
 
 
 def test_change_property_which_added_multi_select(mock_urllib_request_urlopen):
@@ -311,8 +313,8 @@ def test_change_property_which_added_multi_select(mock_urllib_request_urlopen):
     # verify
     args = mock_urlopen.call_args.args
     act_req: urllib.request.Request = args[0]
-    act_req_body = json.loads(act_req.data.decode("utf-8"))
-    exp_req_body = {
+    act_req_body = act_req.data.decode("utf-8")
+    exp_req = {
         "id": page_id,
         "last_edited_time": last_edited_time,
         "added": {},
@@ -340,6 +342,7 @@ def test_change_property_which_added_multi_select(mock_urllib_request_urlopen):
         },
         "deleted": {},
     }
+    exp_req_body = json.dumps(exp_req, ensure_ascii=False)
     assert exp_req_body == act_req_body
 
     # assert saved page
@@ -351,7 +354,7 @@ def test_change_property_which_added_multi_select(mock_urllib_request_urlopen):
     )
     item = ret["Item"]
     act = item["page_info"]["S"]
-    assert event == json.loads(act)
+    assert json.dumps(event, ensure_ascii=False) == act
 
 
 def test_change_property_which_added_multi_select_2(
@@ -397,8 +400,8 @@ def test_change_property_which_added_multi_select_2(
     # verify
     args = mock_urlopen.call_args.args
     act_req: urllib.request.Request = args[0]
-    act_req_body = json.loads(act_req.data.decode("utf-8"))
-    exp_req_body = {
+    act_req_body = act_req.data.decode("utf-8")
+    exp_req = {
         "id": page_id,
         "last_edited_time": last_edited_time,
         "added": {},
@@ -437,6 +440,7 @@ def test_change_property_which_added_multi_select_2(
         },
         "deleted": {},
     }
+    exp_req_body = json.dumps(exp_req, ensure_ascii=False)
     assert exp_req_body == act_req_body
 
     # assert saved page
@@ -448,7 +452,7 @@ def test_change_property_which_added_multi_select_2(
     )
     item = ret["Item"]
     act = item["page_info"]["S"]
-    assert event == json.loads(act)
+    assert json.dumps(event, ensure_ascii=False) == act
 
 
 def test_change_property_which_deleted_multi_select(
@@ -488,8 +492,8 @@ def test_change_property_which_deleted_multi_select(
     # verify
     args = mock_urlopen.call_args.args
     act_req: urllib.request.Request = args[0]
-    act_req_body = json.loads(act_req.data.decode("utf-8"))
-    exp_req_body = {
+    act_req_body = act_req.data.decode("utf-8")
+    exp_req = {
         "id": page_id,
         "last_edited_time": last_edited_time,
         "added": {},
@@ -517,6 +521,7 @@ def test_change_property_which_deleted_multi_select(
         },
         "deleted": {},
     }
+    exp_req_body = json.dumps(exp_req, ensure_ascii=False)
     assert exp_req_body == act_req_body
 
     # assert saved page
@@ -528,7 +533,7 @@ def test_change_property_which_deleted_multi_select(
     )
     item = ret["Item"]
     act = item["page_info"]["S"]
-    assert event == json.loads(act)
+    assert json.dumps(event, ensure_ascii=False) == act
 
 
 def test_change_property_which_deleted_multi_select_2(
@@ -579,8 +584,8 @@ def test_change_property_which_deleted_multi_select_2(
     # verify
     args = mock_urlopen.call_args.args
     act_req: urllib.request.Request = args[0]
-    act_req_body = json.loads(act_req.data.decode("utf-8"))
-    exp_req_body = {
+    act_req_body = act_req.data.decode("utf-8")
+    exp_req = {
         "id": page_id,
         "last_edited_time": last_edited_time,
         "added": {},
@@ -619,6 +624,7 @@ def test_change_property_which_deleted_multi_select_2(
         },
         "deleted": {},
     }
+    exp_req_body = json.dumps(exp_req, ensure_ascii=False)
     assert exp_req_body == act_req_body
 
     # assert saved page
@@ -630,7 +636,7 @@ def test_change_property_which_deleted_multi_select_2(
     )
     item = ret["Item"]
     act = item["page_info"]["S"]
-    assert event == json.loads(act)
+    assert json.dumps(event, ensure_ascii=False) == act
 
 
 def test_delete_property_from_prev_info(mock_urllib_request_urlopen):
@@ -661,8 +667,8 @@ def test_delete_property_from_prev_info(mock_urllib_request_urlopen):
     # verify
     args = mock_urlopen.call_args.args
     act_req: urllib.request.Request = args[0]
-    act_req_body = json.loads(act_req.data.decode("utf-8"))
-    exp_req_body = {
+    act_req_body = act_req.data.decode("utf-8")
+    exp_req = {
         "id": page_id,
         "last_edited_time": last_edited_time,
         "added": {},
@@ -677,6 +683,7 @@ def test_delete_property_from_prev_info(mock_urllib_request_urlopen):
             }
         },
     }
+    exp_req_body = json.dumps(exp_req, ensure_ascii=False)
     assert exp_req_body == act_req_body
 
     # assert saved page
@@ -688,4 +695,4 @@ def test_delete_property_from_prev_info(mock_urllib_request_urlopen):
     )
     item = ret["Item"]
     act = item["page_info"]["S"]
-    assert event == json.loads(act)
+    assert json.dumps(event, ensure_ascii=False) == act
