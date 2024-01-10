@@ -113,14 +113,14 @@ def take_diff_in_page_info(prev_info, current_info):
         if action == "values_changed":
             old_dic = _generate_diff_dict(prev_info, diff, "old_value")
 
-            result["changed"]["new"] = result["changed"]["new"] | dic
             result["changed"]["old"] = result["changed"]["old"] | old_dic
+            result["changed"]["new"] = result["changed"]["new"] | dic
         elif action in ["iterable_item_added", "iterable_item_removed"]:
             logger.debug("generate old diff dict...")
             old_dic = _generate_diff_dict(prev_info, diff, "value")
 
-            result["changed"]["new"] = result["changed"]["new"] | dic
             result["changed"]["old"] = result["changed"]["old"] | old_dic
+            result["changed"]["new"] = result["changed"]["new"] | dic
 
         # deleted
         if action == "dictionary_item_removed":
