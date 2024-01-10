@@ -137,7 +137,7 @@ def save_page_info(page_id: str, page_info: Dict[str, Any]):
         Item={
             "id": {"S": page_id},
             "last_edited_time": {"S": last_edited_time},
-            "page_info": {"S": json.dumps(page_info)},
+            "page_info": {"S": json.dumps(page_info, ensure_ascii=False)},
         },
     )
 
@@ -148,7 +148,9 @@ def send_difference(url, body):
     headers = {
         "Content-Type": "application/json",
     }
-    req = urllib.request.Request(url, json.dumps(body).encode(), headers)
+    req = urllib.request.Request(
+        url, json.dumps(body, ensure_ascii=False).encode(), headers
+    )
     with urllib.request.urlopen(req):
         # Ignore the response because the purpose is to send a difference.
         pass
