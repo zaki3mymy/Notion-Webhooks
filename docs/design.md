@@ -14,7 +14,7 @@ The data is managed in DynamoDB.
 | --- | ---- | ----------- |
 | 1   | user_id(PK) | User's email address |
 | 2   | database_id(SK) | ID of Database in Notion |
-| 3   | webhooks_url | URL of the notification destination system |
+| 3   | webhooks_url | Set of URL of the notification destination system |
 
 
 ### Page information

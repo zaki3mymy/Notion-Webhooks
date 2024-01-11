@@ -26,8 +26,8 @@ def _get_database_id_url_dict(user_id: str) -> Dict[str, List[str]]:
     id_url_dict = defaultdict(list)
     for r in result["Items"]:
         database_id = r["database_id"]["S"]
-        url = r["webhooks_url"]["S"]
-        id_url_dict[database_id].append(url)
+        url_list = r["webhooks_url"]["SS"]
+        id_url_dict[database_id] = url_list
 
     return id_url_dict
 

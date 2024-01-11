@@ -31,12 +31,13 @@ def mock_dynamodb_table(monkeypatch):
             AttributeDefinitions=[
                 {"AttributeName": "user_id", "AttributeType": "S"},
                 {"AttributeName": "database_id", "AttributeType": "S"},
-                {"AttributeName": "webhooks_url", "AttributeType": "S"},
+                # {"AttributeName": "webhooks_url", "AttributeType": "S"},
             ],
             KeySchema=[
+                # DynamoDB has only two keys, partition key and sort key
                 {"AttributeName": "user_id", "KeyType": "HASH"},
                 {"AttributeName": "database_id", "KeyType": "RANGE"},
-                {"AttributeName": "webhooks_url", "KeyType": "RANGE"},
+                # {"AttributeName": "webhooks_url", "KeyType": "RANGE"},
             ],
             BillingMode="PAY_PER_REQUEST",
         )
@@ -66,21 +67,21 @@ def mock_lambda_client(monkeypatch, mocker: MockerFixture):
     return mock_client
 
 
-def add_record(user_id, database_id, url):
+def add_record(user_id, database_id, url_list):
     client = boto3.client("dynamodb")
     client.put_item(
         TableName=TABLE_NAME,
         Item={
             "user_id": {"S": user_id},
             "database_id": {"S": database_id},
-            "webhooks_url": {"S": url},
+            "webhooks_url": {"SS": url_list},
         },
     )
 
 
 def test_one_database_id_one_url(mock_lambda_client):
     # prepare
-    add_record("user01@example.com", "D001", "https://www.example01.com")
+    add_record("user01@example.com", "D001", ["https://www.example01.com"])
 
     # execute
     event = {"user_id": "user01@example.com"}
@@ -104,8 +105,11 @@ def test_one_database_id_one_url(mock_lambda_client):
 
 def test_one_database_id_two_url(mock_lambda_client):
     # prepare
-    add_record("user01@example.com", "D001", "https://www.example01.com")
-    add_record("user01@example.com", "D001", "https://www.example02.com")
+    add_record(
+        "user01@example.com",
+        "D001",
+        ["https://www.example01.com", "https://www.example02.com"],
+    )
 
     # execute
     event = {"user_id": "user01@example.com"}
@@ -130,8 +134,8 @@ def test_one_database_id_two_url(mock_lambda_client):
 
 def test_two_database_id_two_url(mock_lambda_client):
     # prepare
-    add_record("user01@example.com", "D001", "https://www.example01.com")
-    add_record("user01@example.com", "D002", "https://www.example02.com")
+    add_record("user01@example.com", "D001", ["https://www.example01.com"])
+    add_record("user01@example.com", "D002", ["https://www.example02.com"])
 
     # execute
     event = {"user_id": "user01@example.com"}
