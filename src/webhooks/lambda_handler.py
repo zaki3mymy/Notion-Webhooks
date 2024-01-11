@@ -159,24 +159,27 @@ def send_difference(url, body):
 def lambda_function(event, context):
     logger.debug("event: %s", event)
 
-    page_id = event["id"]
+    webhooks_url: List[str] = event["webhooks_url"]
+    page_info = event["page_info"]
+
+    page_id = page_info["id"]
     logger.info("page_id: %s", page_id)
-    last_edited_time = event["last_edited_time"]
+    last_edited_time = page_info["last_edited_time"]
 
     prev_page_info = fetch_prev_page_info(page_id)
     logger.debug("prev_info: %s", prev_page_info)
-    save_page_info(page_id, event)
+    save_page_info(page_id, page_info)
     if prev_page_info == {}:
         # new page
         logger.info("new page: %s", page_id)
         return
 
-    diff = take_diff_in_page_info(prev_page_info, event)
+    diff = take_diff_in_page_info(prev_page_info, page_info)
     logger.info("diff in page_info: %s", diff)
 
-    url = os.environ["INTEGRATION_URL"]
     body = {
         "id": page_id,
         "last_edited_time": last_edited_time,
     } | diff  # '|' means "merge dictionaries"
-    send_difference(url, body)
+    for url in webhooks_url:
+        send_difference(url, body)

@@ -8,13 +8,11 @@ from pytest_mock import MockerFixture
 
 from webhooks.lambda_handler import lambda_function
 
-INTEGRATION_URL = "https://example.com"
 TABLE_NAME = "monitoring-table"
 
 
 @pytest.fixture(autouse=True)
 def setenv(monkeypatch):
-    monkeypatch.setenv("INTEGRATION_URL", INTEGRATION_URL)
     monkeypatch.setenv("TABLE_NAME", TABLE_NAME)
 
 
@@ -117,8 +115,12 @@ def test_no_prev_info(mock_urllib_request_urlopen):
     mock_urlopen = mock_urllib_request_urlopen()
 
     # execute
-    event = create_page_info(page_id, last_edited_time)
+    page_info = create_page_info(page_id, last_edited_time)
 
+    event = {
+        "webhooks_url": ["https://www.example.com"],
+        "page_info": page_info,
+    }
     lambda_function(event, {})
 
     # verify
@@ -129,12 +131,12 @@ def test_no_prev_info(mock_urllib_request_urlopen):
     ret = client.get_item(
         TableName=TABLE_NAME,
         Key={
-            "id": {"S": event["id"]},
+            "id": {"S": page_info["id"]},
         },
     )
     item = ret["Item"]
     act = item["page_info"]["S"]
-    assert json.dumps(event, ensure_ascii=False) == act
+    assert json.dumps(page_info, ensure_ascii=False) == act
 
 
 def test_add_property_from_prev_info(mock_urllib_request_urlopen):
@@ -155,9 +157,9 @@ def test_add_property_from_prev_info(mock_urllib_request_urlopen):
 
     mock_urlopen = mock_urllib_request_urlopen()
 
-    event = json.loads(json.dumps(prev_info))
-    event["last_edited_time"] = last_edited_time
-    event["properties"]["Status"] = {  # new property
+    page_info = json.loads(json.dumps(prev_info))
+    page_info["last_edited_time"] = last_edited_time
+    page_info["properties"]["Status"] = {  # new property
         "id": "Z%3ClH",
         "type": "status",
         "status": {
@@ -168,11 +170,17 @@ def test_add_property_from_prev_info(mock_urllib_request_urlopen):
     }
 
     # execute
+    event = {
+        "webhooks_url": ["https://www.example.com"],
+        "page_info": page_info,
+    }
     lambda_function(event, {})
 
     # verify
     args = mock_urlopen.call_args.args
     act_req: urllib.request.Request = args[0]
+    act_url = act_req.get_full_url()
+    assert event["webhooks_url"][0] == act_url
     act_req_body = act_req.data.decode("utf-8")
     exp_req = {
         "id": page_id,
@@ -200,12 +208,12 @@ def test_add_property_from_prev_info(mock_urllib_request_urlopen):
     ret = client.get_item(
         TableName=TABLE_NAME,
         Key={
-            "id": {"S": event["id"]},
+            "id": {"S": page_info["id"]},
         },
     )
     item = ret["Item"]
     act = item["page_info"]["S"]
-    assert json.dumps(event, ensure_ascii=False) == act
+    assert json.dumps(page_info, ensure_ascii=False) == act
 
 
 def test_change_property_from_prev_info(mock_urllib_request_urlopen):
@@ -231,16 +239,22 @@ def test_change_property_from_prev_info(mock_urllib_request_urlopen):
 
     mock_urlopen = mock_urllib_request_urlopen()
 
-    event = json.loads(json.dumps(prev_info))
-    event["last_edited_time"] = last_edited_time
-    event["properties"]["Price"]["number"] = 5  # changed property
+    page_info = json.loads(json.dumps(prev_info))
+    page_info["last_edited_time"] = last_edited_time
+    page_info["properties"]["Price"]["number"] = 5  # changed property
 
     # execute
+    event = {
+        "webhooks_url": ["https://www.example.com"],
+        "page_info": page_info,
+    }
     lambda_function(event, {})
 
     # verify
     args = mock_urlopen.call_args.args
     act_req: urllib.request.Request = args[0]
+    act_url = act_req.get_full_url()
+    assert event["webhooks_url"][0] == act_url
     act_req_body = act_req.data.decode("utf-8")
     exp_req = {
         "id": page_id,
@@ -271,12 +285,12 @@ def test_change_property_from_prev_info(mock_urllib_request_urlopen):
     ret = client.get_item(
         TableName=TABLE_NAME,
         Key={
-            "id": {"S": event["id"]},
+            "id": {"S": page_info["id"]},
         },
     )
     item = ret["Item"]
     act = item["page_info"]["S"]
-    assert json.dumps(event, ensure_ascii=False) == act
+    assert json.dumps(page_info, ensure_ascii=False) == act
 
 
 def test_change_property_which_added_multi_select(mock_urllib_request_urlopen):
@@ -297,9 +311,9 @@ def test_change_property_which_added_multi_select(mock_urllib_request_urlopen):
 
     mock_urlopen = mock_urllib_request_urlopen()
 
-    event = json.loads(json.dumps(prev_info))
-    event["last_edited_time"] = last_edited_time
-    event["properties"]["Category"]["multi_select"].append(  # changed property
+    page_info = json.loads(json.dumps(prev_info))
+    page_info["last_edited_time"] = last_edited_time
+    page_info["properties"]["Category"]["multi_select"].append(  # changed property
         {
             "id": "t|O@",
             "name": "comic",
@@ -308,11 +322,17 @@ def test_change_property_which_added_multi_select(mock_urllib_request_urlopen):
     )
 
     # execute
+    event = {
+        "webhooks_url": ["https://www.example.com"],
+        "page_info": page_info,
+    }
     lambda_function(event, {})
 
     # verify
     args = mock_urlopen.call_args.args
     act_req: urllib.request.Request = args[0]
+    act_url = act_req.get_full_url()
+    assert event["webhooks_url"][0] == act_url
     act_req_body = act_req.data.decode("utf-8")
     exp_req = {
         "id": page_id,
@@ -349,12 +369,12 @@ def test_change_property_which_added_multi_select(mock_urllib_request_urlopen):
     ret = client.get_item(
         TableName=TABLE_NAME,
         Key={
-            "id": {"S": event["id"]},
+            "id": {"S": page_info["id"]},
         },
     )
     item = ret["Item"]
     act = item["page_info"]["S"]
-    assert json.dumps(event, ensure_ascii=False) == act
+    assert json.dumps(page_info, ensure_ascii=False) == act
 
 
 def test_change_property_which_added_multi_select_2(
@@ -384,9 +404,9 @@ def test_change_property_which_added_multi_select_2(
 
     mock_urlopen = mock_urllib_request_urlopen()
 
-    event = json.loads(json.dumps(prev_info))
-    event["last_edited_time"] = last_edited_time
-    event["properties"]["Category"]["multi_select"].append(  # changed property
+    page_info = json.loads(json.dumps(prev_info))
+    page_info["last_edited_time"] = last_edited_time
+    page_info["properties"]["Category"]["multi_select"].append(  # changed property
         {
             "id": "t|O@",
             "name": "comic",
@@ -395,11 +415,17 @@ def test_change_property_which_added_multi_select_2(
     )
 
     # execute
+    event = {
+        "webhooks_url": ["https://www.example.com"],
+        "page_info": page_info,
+    }
     lambda_function(event, {})
 
     # verify
     args = mock_urlopen.call_args.args
     act_req: urllib.request.Request = args[0]
+    act_url = act_req.get_full_url()
+    assert event["webhooks_url"][0] == act_url
     act_req_body = act_req.data.decode("utf-8")
     exp_req = {
         "id": page_id,
@@ -447,12 +473,12 @@ def test_change_property_which_added_multi_select_2(
     ret = client.get_item(
         TableName=TABLE_NAME,
         Key={
-            "id": {"S": event["id"]},
+            "id": {"S": page_info["id"]},
         },
     )
     item = ret["Item"]
     act = item["page_info"]["S"]
-    assert json.dumps(event, ensure_ascii=False) == act
+    assert json.dumps(page_info, ensure_ascii=False) == act
 
 
 def test_change_property_which_deleted_multi_select(
@@ -482,16 +508,22 @@ def test_change_property_which_deleted_multi_select(
 
     mock_urlopen = mock_urllib_request_urlopen()
 
-    event = json.loads(json.dumps(prev_info))
-    event["last_edited_time"] = last_edited_time
-    event["properties"]["Category"]["multi_select"] = []  # changed property
+    page_info = json.loads(json.dumps(prev_info))
+    page_info["last_edited_time"] = last_edited_time
+    page_info["properties"]["Category"]["multi_select"] = []  # changed property
 
     # execute
+    event = {
+        "webhooks_url": ["https://www.example.com"],
+        "page_info": page_info,
+    }
     lambda_function(event, {})
 
     # verify
     args = mock_urlopen.call_args.args
     act_req: urllib.request.Request = args[0]
+    act_url = act_req.get_full_url()
+    assert event["webhooks_url"][0] == act_url
     act_req_body = act_req.data.decode("utf-8")
     exp_req = {
         "id": page_id,
@@ -528,12 +560,12 @@ def test_change_property_which_deleted_multi_select(
     ret = client.get_item(
         TableName=TABLE_NAME,
         Key={
-            "id": {"S": event["id"]},
+            "id": {"S": page_info["id"]},
         },
     )
     item = ret["Item"]
     act = item["page_info"]["S"]
-    assert json.dumps(event, ensure_ascii=False) == act
+    assert json.dumps(page_info, ensure_ascii=False) == act
 
 
 def test_change_property_which_deleted_multi_select_2(
@@ -568,9 +600,9 @@ def test_change_property_which_deleted_multi_select_2(
 
     mock_urlopen = mock_urllib_request_urlopen()
 
-    event = json.loads(json.dumps(prev_info))
-    event["last_edited_time"] = last_edited_time
-    event["properties"]["Category"]["multi_select"] = [  # changed property
+    page_info = json.loads(json.dumps(prev_info))
+    page_info["last_edited_time"] = last_edited_time
+    page_info["properties"]["Category"]["multi_select"] = [  # changed property
         {
             "id": "t|O@",
             "name": "comic",
@@ -579,11 +611,17 @@ def test_change_property_which_deleted_multi_select_2(
     ]
 
     # execute
+    event = {
+        "webhooks_url": ["https://www.example.com"],
+        "page_info": page_info,
+    }
     lambda_function(event, {})
 
     # verify
     args = mock_urlopen.call_args.args
     act_req: urllib.request.Request = args[0]
+    act_url = act_req.get_full_url()
+    assert event["webhooks_url"][0] == act_url
     act_req_body = act_req.data.decode("utf-8")
     exp_req = {
         "id": page_id,
@@ -631,12 +669,12 @@ def test_change_property_which_deleted_multi_select_2(
     ret = client.get_item(
         TableName=TABLE_NAME,
         Key={
-            "id": {"S": event["id"]},
+            "id": {"S": page_info["id"]},
         },
     )
     item = ret["Item"]
     act = item["page_info"]["S"]
-    assert json.dumps(event, ensure_ascii=False) == act
+    assert json.dumps(page_info, ensure_ascii=False) == act
 
 
 def test_delete_property_from_prev_info(mock_urllib_request_urlopen):
@@ -657,16 +695,22 @@ def test_delete_property_from_prev_info(mock_urllib_request_urlopen):
 
     mock_urlopen = mock_urllib_request_urlopen()
 
-    event = json.loads(json.dumps(prev_info))
-    event["last_edited_time"] = last_edited_time
-    del event["properties"]["Category"]  # deleted property
+    page_info = json.loads(json.dumps(prev_info))
+    page_info["last_edited_time"] = last_edited_time
+    del page_info["properties"]["Category"]  # deleted property
 
     # execute
+    event = {
+        "webhooks_url": ["https://www.example.com"],
+        "page_info": page_info,
+    }
     lambda_function(event, {})
 
     # verify
     args = mock_urlopen.call_args.args
     act_req: urllib.request.Request = args[0]
+    act_url = act_req.get_full_url()
+    assert event["webhooks_url"][0] == act_url
     act_req_body = act_req.data.decode("utf-8")
     exp_req = {
         "id": page_id,
@@ -690,9 +734,9 @@ def test_delete_property_from_prev_info(mock_urllib_request_urlopen):
     ret = client.get_item(
         TableName=TABLE_NAME,
         Key={
-            "id": {"S": event["id"]},
+            "id": {"S": page_info["id"]},
         },
     )
     item = ret["Item"]
     act = item["page_info"]["S"]
-    assert json.dumps(event, ensure_ascii=False) == act
+    assert json.dumps(page_info, ensure_ascii=False) == act

@@ -81,7 +81,8 @@ def query_database(database_id, filter_conditions):
 
 def lambda_function(event, context):
     logger.info("event: %s", event)
-    database_id = event["DATABASE_ID"]
+    database_id = event["database_id"]
+    webhooks_url = event["webhooks_url"]
     lambda_name = os.environ["LAMBDA_NAME_WEBHOOKS"]
 
     filter_conditions = _build_filter_conditions()
@@ -94,8 +95,13 @@ def lambda_function(event, context):
         logger.info("page id: %s", id_)
         logger.debug("page: %s", r)
 
+        next_event = {
+            "webhooks_url": webhooks_url,
+            "page_info": r
+        }
+
         client.invoke(
             FunctionName=lambda_name,
             InvocationType="Event",
-            Payload=json.dumps(r),
+            Payload=json.dumps(next_event),
         )

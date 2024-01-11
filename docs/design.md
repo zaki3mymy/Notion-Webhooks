@@ -2,7 +2,22 @@
 
 ## Data definition
 
-The items of DynamoDB are as follows.
+The data is managed in DynamoDB.
+
+- [Database ID](#database-id)
+- [Page information](#page-information)
+
+
+### Database ID
+
+| No. | name | description |
+| --- | ---- | ----------- |
+| 1   | user_id(PK) | User's email address |
+| 2   | database_id(SK) | ID of Database in Notion |
+| 3   | webhooks_url | Set of URL of the notification destination system |
+
+
+### Page information
 
 | No. | name | description |
 | --- | ---- | ----------- |
@@ -31,6 +46,7 @@ sequenceDiagram
 
     box rgb(255, 153, 0) AWS
     participant EB as EventBridge
+    participant L0 as Lambda<br>orchestration
     participant L1 as Lambda<br>monitoring
     participant L2 as Lambda<br>webhooks
     participant DynamoDB
@@ -40,33 +56,77 @@ sequenceDiagram
     end
     participant Other System
 
-    EB -) L1: Invoke every 1 minute
+    EB -) L0: Invoke every 1 minute
 
-    activate L1
+    activate L0
+
+    L0 ->>+ DynamoDB: Get the Notion database ID
+    DynamoDB -->>- L0: List of database ID
+    loop Number of IDs
+        L0 -)+ L1: Invoke with database ID
+    end
+    deactivate L0
+
     L1 ->>+ Notion: Get pages whose last_edited_time is after the [current date - 1 minute]
     Notion -->>- L1: List of pages
 
     loop Number of pages
-        L1 -) L2: Invoke with page information
+        L1 -)+ L2: Invoke with page information
     end
     deactivate L1
 
-    activate L2
     L2 ->>+ DynamoDB: Get previous page information
     DynamoDB -->>- L2: Previous page information
+    L2 -) DynamoDB: Update page information
     L2 ->> L2: Take a difference in page information
     L2 -) Other System: Notification the difference
-    L2 -) DynamoDB: Update page information
     deactivate L2
 ```
 
 
 ## Interface
 
+### EventBridge --> Lambda(orchestration)
+
+```json
+{
+    "user_id": "user@example.com"
+}
+```
+
+### Lambda(orchestration) --> Lambda(monitoring)
+
+Send the database ID and the URL (multiple) to notify the change by JSON.
+
+For example...
+```json
+{
+    "database_id": "15f6f80f6b294d55b04a32fc0f6a0fff",
+    "webhooks_url": [
+        "https://www.example.com"
+    ]
+}
+```
+
 ### Lambda(monitoring) --> Lambda(webhooks)
 
-The `event` object sent from Lambda (monitoring) to Lambda (webhooks) is the [Page][notion-api-1] object.
-See [Data definition](#data-definition).
+The `event` object sent from Lambda (monitoring) to Lambda (webhooks) is `webhooks_url` and the [Page][notion-api-1] object([Page Information](#page-information)).
+
+For example...
+```json
+{
+    "webhooks_url": [
+        "https://www.example.com"
+    ],
+    "page_info": {
+        "object": "page",
+        "id": "59833787-2cf9-4fdf-8782-e53db20768a5",
+        "created_time": "2022-03-01T19:05:00.000Z",
+        "last_edited_time": "2022-07-06T20:25:00.000Z",
+        ...
+    }
+}
+```
 
 
 ### Lambda(webhooks) --> Other System

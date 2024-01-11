@@ -31,3 +31,10 @@ dev-dependencies = [
 
 [tool.hatch.metadata]
 allow-direct-references = true
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/notion_webhooks"]
+
+[tool.pytest.ini_options]
+pythonpath = "src"
+testpaths = ["tests",]
