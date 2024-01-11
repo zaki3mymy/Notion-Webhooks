@@ -18,7 +18,7 @@ class Operation(Enum):
 
 
 class Model:
-    IdUrl = namedtuple("IdUrl", ("user_id", "database_id", "url_list"))
+    Item = namedtuple("IdUrl", ("user_id", "database_id", "url_list"))
 
     def __init__(self, profile):
         if not profile:
@@ -26,7 +26,7 @@ class Model:
         session = boto3.Session(profile_name=profile)
         self.client = session.client("dynamodb")
 
-    def query_database_id(self, user_id) -> List[IdUrl]:
+    def query_database_id(self, user_id) -> List[Item]:
         result = self.client.query(
             TableName=TABLE_NAME,
             KeyConditionExpression="user_id = :user_id",
@@ -37,11 +37,11 @@ class Model:
         for r in result["Items"]:
             database_id = r["database_id"]["S"]
             url_list = r["webhooks_url"]["SS"]
-            entity = Model.IdUrl(user_id, database_id, url_list)
+            entity = Model.Item(user_id, database_id, url_list)
             ret.append(entity)
         return ret
 
-    def register_item(self, item: IdUrl):
+    def register_item(self, item: Item):
         self.client.put_item(
             TableName=TABLE_NAME,
             Item={
@@ -96,7 +96,7 @@ class Logic:
         return dic
 
     def register(self, user_id, database_id, url_list):
-        item = Model.IdUrl(user_id, database_id, url_list)
+        item = Model.Item(user_id, database_id, url_list)
         self.model.register_item(item)
 
     def remove_database(self, user_id, database_id):
