@@ -1,3 +1,3 @@
-# notion-automation-trigger
+# notion-webhooks
 
 Describe your project here.

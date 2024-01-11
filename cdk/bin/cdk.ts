@@ -4,7 +4,7 @@ import 'source-map-support/register';
 import { CdkStack } from '../lib/cdk-stack';
 
 const app = new cdk.App();
-const projectName = "notion-automation-trigger";
+const projectName = "notion-webhooks";
 const intervalMinutes = 1;
 
 new CdkStack(app, `${projectName}-stack`, {
