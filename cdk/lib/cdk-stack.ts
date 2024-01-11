@@ -12,6 +12,7 @@ export interface CustomizedProps extends cdk.StackProps {
   intervalMinutes: number;
   logLevel: string;
   notionSecretKey: string | undefined;
+  notionUserId: string | undefined,
 }
 
 export class CdkStack extends cdk.Stack {
@@ -22,6 +23,10 @@ export class CdkStack extends cdk.Stack {
     if (props.notionSecretKey == undefined) {
       throw new Error("Environmental variable NOTION_SECRET_KEY is not set.");
     }
+    if (props.notionUserId == undefined) {
+      throw new Error("Environmental variable NOTION_USER_EMAIL is not set.");
+    }
+
     // Check the existence of dependency libraries
     if (!existsSync("../lib/python/")) {
       throw new Error("Python's dependent library is not found. Please install into `../lib/python`.");
@@ -39,8 +44,21 @@ export class CdkStack extends cdk.Stack {
     })
 
     // DynamoDB
-    const dynamodbTable = new dynamodb.Table(this, "monitoring-dynamodb-table", {
-      tableName: `${props.projectName}-monitoring-table`,
+    const dynamodbTableDatabaseId = new dynamodb.Table(this, "dynamodb-table-database-id", {
+      tableName: `${props.projectName}-database-id`,
+      partitionKey: {
+        name: "user_id",
+        type: dynamodb.AttributeType.STRING,
+      },
+      sortKey: {
+        name: "database_id",
+        type: dynamodb.AttributeType.STRING,
+      },
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,  // On-demand request
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+    })
+    const dynamodbTablePageInfo = new dynamodb.Table(this, "dynamodb-table-page-info", {
+      tableName: `${props.projectName}-page-info`,
       partitionKey: {
         name: "id",
         type: dynamodb.AttributeType.STRING,
@@ -59,7 +77,7 @@ export class CdkStack extends cdk.Stack {
             "dynamodb:GetItem",
             "dynamodb:PutItem",
           ],
-          resources: [dynamodbTable.tableArn],
+          resources: [dynamodbTablePageInfo.tableArn],
         })
       ]
     })
@@ -84,16 +102,15 @@ export class CdkStack extends cdk.Stack {
       role: iamRoleForWebhooks,
       environment: {
         "LOGLEVEL": props.logLevel,
-        "INTEGRATION_URL": "https://example.com",
-        "TABLE_NAME": dynamodbTable.tableName,
+        "TABLE_NAME": dynamodbTablePageInfo.tableName,
       },
       layers: [lambdaLayer]
     })
 
     //////// Monitoring
     // IAM
-    const iamPolicyForInvoking = new iam.Policy(this, "iam-policy-lambda-invoking", {
-      policyName: `${props.projectName}-invoke-policy`,
+    const iamPolicyForMonitoring = new iam.Policy(this, "iam-policy-lambda-monitoring", {
+      policyName: `${props.projectName}-lambda-invoke-policy`,
       statements: [
         new iam.PolicyStatement({
           actions: ["lambda:InvokeFunction"],
@@ -110,7 +127,7 @@ export class CdkStack extends cdk.Stack {
         }
       ]
     });
-    iamRoleForMonitoring.attachInlinePolicy(iamPolicyForInvoking);
+    iamRoleForMonitoring.attachInlinePolicy(iamPolicyForMonitoring);
 
     // Lambda
     const lambdaMonitoring = new lambda.Function(this, "lambda-monitoring", {
@@ -128,14 +145,57 @@ export class CdkStack extends cdk.Stack {
       }
     })
 
+    //////// Orchestration
+    // IAM
+    const iamPolicyForOrchestration = new iam.Policy(this, "iam-policy-lambda-orchestration", {
+      policyName: `${props.projectName}-lambda-invoke-policy`,
+      statements: [
+        new iam.PolicyStatement({
+          actions: ["lambda:InvokeFunction"],
+          resources: [lambdaMonitoring.functionArn],
+        }),
+        new iam.PolicyStatement({
+          actions: [
+            "dynamodb:Query",
+          ],
+          resources: [dynamodbTableDatabaseId.tableArn],
+        })
+      ]
+    })
+    const iamRoleForOrchestration = new iam.Role(this, "iam-role-lambda-orchestration", {
+      roleName: `${props.projectName}-orchestration-lambda-role`,
+      assumedBy: new iam.ServicePrincipal("lambda.amazonaws.com"),
+      managedPolicies: [
+        {
+          "managedPolicyArn": "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+        }
+      ]
+    });
+    iamRoleForOrchestration.attachInlinePolicy(iamPolicyForOrchestration);
+
+    // Lambda
+    const lambdaOrchestration = new lambda.Function(this, "lambda-orchestration", {
+      functionName: `${props.projectName}-orchestration-lambda`,
+      runtime: lambda.Runtime.PYTHON_3_12,
+      timeout: cdk.Duration.seconds(duration),
+      code: lambda.Code.fromAsset("../src/orchestration"),
+      handler: "lambda_handler.lambda_function",
+      role: iamRoleForOrchestration,
+      environment: {
+        "LOGLEVEL": props.logLevel,
+        "TABLE_NAME": dynamodbTableDatabaseId.tableName,
+        "LAMBDA_NAME_MONITORING": lambdaMonitoring.functionName,
+      }
+    })
+
     // EventBridge
-    new events.Rule(this, "monitoring-event-bridge", {
-      ruleName: `${props.projectName}-monitoring-schedule`,
+    new events.Rule(this, "event-bridge", {
+      ruleName: `${props.projectName}-schedule`,
       // Execute every 1 minute
       schedule: events.Schedule.cron({minute: `*/${props.intervalMinutes}`}),
-      targets: [new targets.LambdaFunction(lambdaMonitoring, {
+      targets: [new targets.LambdaFunction(lambdaOrchestration, {
         event: events.RuleTargetInput.fromObject({
-          DATABASE_ID: "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+          user_id: props.notionUserId,
         })
       })]
     })

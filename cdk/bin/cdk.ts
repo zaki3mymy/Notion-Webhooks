@@ -26,4 +26,5 @@ new CdkStack(app, `${projectName}-stack`, {
   intervalMinutes,
   logLevel,
   notionSecretKey: process.env.NOTION_SECRET_KEY,
+  notionUserId: process.env.NOTION_USER_EMAIL,
 });
