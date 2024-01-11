@@ -10,6 +10,7 @@ import { existsSync } from 'fs';
 export interface CustomizedProps extends cdk.StackProps {
   projectName: string;
   intervalMinutes: number;
+  logLevel: string;
   notionSecretKey: string | undefined;
 }
 
@@ -82,7 +83,7 @@ export class CdkStack extends cdk.Stack {
       handler: "lambda_handler.lambda_function",
       role: iamRoleForWebhooks,
       environment: {
-        "LOGLEVEL": "INFO",
+        "LOGLEVEL": props.logLevel,
         "INTEGRATION_URL": "https://example.com",
         "TABLE_NAME": dynamodbTable.tableName,
       },
@@ -120,7 +121,7 @@ export class CdkStack extends cdk.Stack {
       handler: "lambda_handler.lambda_function",
       role: iamRoleForMonitoring,
       environment: {
-        "LOGLEVEL": "INFO",
+        "LOGLEVEL": props.logLevel,
         "SECRET_KEY": props.notionSecretKey,
         "INTERVAL_MINUTES": String(props.intervalMinutes),
         "LAMBDA_NAME_WEBHOOKS": lambdaWebhooks.functionName,
