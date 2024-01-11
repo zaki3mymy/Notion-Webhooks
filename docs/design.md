@@ -2,7 +2,21 @@
 
 ## Data definition
 
-The items of DynamoDB are as follows.
+The data is managed in DynamoDB.
+
+- [Database Id](#database-id)
+- [Page information](#page-information)
+
+
+### Database ID
+
+| No. | name | description |
+| --- | ---- | ----------- |
+| 1   | user_id(PK) | User's email address |
+| 2   | database_id | ID of Database in Notion |
+
+
+### Page information
 
 | No. | name | description |
 | --- | ---- | ----------- |
@@ -31,6 +45,7 @@ sequenceDiagram
 
     box rgb(255, 153, 0) AWS
     participant EB as EventBridge
+    participant L0 as Lambda<br>orchestration
     participant L1 as Lambda<br>monitoring
     participant L2 as Lambda<br>webhooks
     participant DynamoDB
@@ -40,18 +55,25 @@ sequenceDiagram
     end
     participant Other System
 
-    EB -) L1: Invoke every 1 minute
+    EB -) L0: Invoke every 1 minute
 
-    activate L1
+    activate L0
+
+    L0 ->>+ DynamoDB: Get the Notion database ID
+    DynamoDB -->>- L0: List of database ID
+    loop Number of IDs
+        L0 -)+ L1: Invoke with database ID
+    end
+    deactivate L0
+
     L1 ->>+ Notion: Get pages whose last_edited_time is after the [current date - 1 minute]
     Notion -->>- L1: List of pages
 
     loop Number of pages
-        L1 -) L2: Invoke with page information
+        L1 -)+ L2: Invoke with page information
     end
     deactivate L1
 
-    activate L2
     L2 ->>+ DynamoDB: Get previous page information
     DynamoDB -->>- L2: Previous page information
     L2 ->> L2: Take a difference in page information
@@ -62,6 +84,17 @@ sequenceDiagram
 
 
 ## Interface
+
+### Lambda(orchestration) --> Lambda(monitoring)
+
+Simply send a database ID by JSON.
+
+For example...
+```json
+{
+    "database_id": "15f6f80f6b294d55b04a32fc0f6a0fff"
+}
+```
 
 ### Lambda(monitoring) --> Lambda(webhooks)
 
