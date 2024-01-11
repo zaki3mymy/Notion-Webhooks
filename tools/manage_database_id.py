@@ -54,7 +54,7 @@ class Model:
     def remove_item(self, user_id, database_id):
         self.client.delete_item(
             TableName=TABLE_NAME,
-            Item={
+            Key={
                 "user_id": {"S": user_id},
                 "database_id": {"S": database_id},
             },
