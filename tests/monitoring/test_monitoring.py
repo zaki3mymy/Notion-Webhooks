@@ -101,12 +101,18 @@ def test_monitoring(mocker, mock_lambda_client):
 
     # execute
     event = {
-        "DATABASE_ID": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+        "database_id": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+        "webhooks_url": ["https://www.example.com"],
     }
     lambda_function(event, {})
 
     # verify
-    exp = json.dumps(body["results"][0])
+    exp = json.dumps(
+        {
+            "webhooks_url": event["webhooks_url"],
+            "page_info": body["results"][0],
+        }
+    )
     mock_lambda_client.invoke.assert_called_once_with(
         FunctionName=LAMBDA_NAME_WEBHOOKS,
         InvocationType="Event",
