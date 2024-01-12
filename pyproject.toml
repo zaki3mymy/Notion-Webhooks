@@ -27,6 +27,7 @@ dev-dependencies = [
     "isort>=5.13.2",
     "black>=23.12.1",
     "pytest>=7.4.4",
+    "questionary>=2.0.1",
 ]
 
 [tool.hatch.metadata]
