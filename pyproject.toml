@@ -28,6 +28,9 @@ dev-dependencies = [
     "black>=23.12.1",
     "pytest>=7.4.4",
     "questionary>=2.0.1",
+    "pytest-cov>=4.1.0",
+    "pytest-parallel>=0.1.1",
+    "py>=1.11.0",
 ]
 
 [tool.hatch.metadata]
@@ -39,3 +42,4 @@ packages = ["src/notion_webhooks"]
 [tool.pytest.ini_options]
 pythonpath = "src"
 testpaths = ["tests",]
+addopts = "--workers=auto --cov=src --cov-branch --cov-report=term --cov-report=html"
