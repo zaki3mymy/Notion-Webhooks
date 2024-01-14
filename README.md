@@ -30,7 +30,7 @@ You need to download the dependent library for Lambda Layer before the deployer.
 We have a shell script for downloading.
 If you execute it, the dependent library will be downloaded to the `./lib/python` directory.
 
-```
+```bash
 sh download-dependencies.sh
 ```
 
@@ -38,12 +38,15 @@ sh download-dependencies.sh
 
 First, prepare CDK with `npm install`.
 
-```
+```bash
 cd cdk
 npm install
 ```
 
-Finally, do a CDK deployment.
-```
+Once you set an environment variable, deploy with CDK!
+```bash
+export NOTION_USER_EMAIL=user@example.com
+export NOTION_SECRET_KEY=secret_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
 cdk deploy --profile <your profile>
 ```
