@@ -22,7 +22,7 @@ Notion-Webhooks is made in Python. The dependent library is as follows.
 - deepdiff 6.7.1
 
 
-## Deployment
+## Installation
 
 Do deployment using CDK.
 You need to download the dependent library for Lambda Layer before the deployer.
@@ -49,4 +49,23 @@ export NOTION_USER_EMAIL=user@example.com
 export NOTION_SECRET_KEY=secret_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 cdk deploy --profile <your profile>
+```
+
+### Set the Notion database ID(with tools)
+
+Set the notion database to be monitored.
+It is convenient to use the tool prepared for the `./tools` directory.
+
+```bash
+python tools/manage_database_id.py 
+
+? profile? default
+? user_id? user@example.com
+Fetching your registered database ID...
+You have no database settings.
+? Input your database ID AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+? Input your webhooks url https://www.example.com
+? Do you want to add more URLs? no
+Registering database info...
+Done.
 ```
