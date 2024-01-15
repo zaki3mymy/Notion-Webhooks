@@ -1,3 +1,4 @@
+import os
 from collections import namedtuple
 from enum import Enum
 from typing import Dict, List
@@ -119,10 +120,9 @@ class Prompt:
         return questionary.text("profile?").unsafe_ask()
 
     @classmethod
-    def ask_user_id(cls) -> str:
+    def ask_user_id(cls, default="") -> str:
         return questionary.text(
-            "user_id?",
-            validate=Logic.validate_empty_input,
+            "user_id?", validate=Logic.validate_empty_input, default=default
         ).unsafe_ask()
 
     @classmethod
@@ -168,7 +168,8 @@ def main():
     logic = Logic(model)
 
     # ask user_id
-    user_id = Prompt.ask_user_id()
+    user_id_env = os.getenv("NOTION_USER_EMAIL")
+    user_id = Prompt.ask_user_id(user_id_env)
 
     # fetch database_id
     print("Fetching your registered database ID...")
