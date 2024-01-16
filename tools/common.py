@@ -1,3 +1,7 @@
+import json
+import os
+import urllib.parse
+import urllib.request
 from collections import namedtuple
 from typing import Dict, List
 from uuid import UUID
@@ -7,10 +11,13 @@ import questionary
 from questionary import Choice
 
 TABLE_NAME = "notion-webhooks-database-id"
+TABLE_NAME_PAGE_INFO = "notion-webhooks-page-info"
+ENDPOINT_ROOT = "https://api.notion.com/v1"
 
 
 class Model:
-    Item = namedtuple("IdUrl", ("user_id", "database_id", "url_list"))
+    Item = namedtuple("Item", ("user_id", "database_id", "url_list"))
+    PageInfo = namedtuple("PageInfo", ("id", "last_edited_time", "page_info"))
 
     def __init__(self, profile):
         if not profile:
@@ -49,6 +56,16 @@ class Model:
             Key={
                 "user_id": {"S": user_id},
                 "database_id": {"S": database_id},
+            },
+        )
+
+    def register_page_info(self, item: PageInfo):
+        self.client.put_item(
+            TableName=TABLE_NAME_PAGE_INFO,
+            Item={
+                "id": {"S": item.id},
+                "last_edited_time": {"S": item.last_edited_time},
+                "page_info": {"S": item.page_info},
             },
         )
 
@@ -93,6 +110,46 @@ class Logic:
 
     def remove_database(self, user_id, database_id):
         self.model.remove_item(user_id, database_id)
+
+    def query_database(self, database_id):
+        url = f"{ENDPOINT_ROOT}/databases/{database_id}/query"
+
+        SECRET_KEY = os.environ["NOTION_SECRET_KEY"]
+        headers = {
+            "Authorization": f"Bearer {SECRET_KEY}",
+            "Content-Type": "application/json",
+            "Notion-Version": "2022-06-28",
+        }
+
+        results = []
+        next_cursor = ""
+        has_more = True
+        while has_more:
+            body = {
+                "page_size": 100,
+            }
+            if next_cursor:
+                body["start_cursor"] = next_cursor
+
+            # "Add connect" is required in the Notion database settings
+            req = urllib.request.Request(url, json.dumps(body).encode(), headers)
+            with urllib.request.urlopen(req) as res:
+                body = json.load(res)
+
+            results += body["results"]
+
+            next_cursor = body["next_cursor"]
+            has_more = body["has_more"]
+
+        return results
+
+    def register_page_info(self, page):
+        id_ = page["id"]
+        last_edited_time = page["last_edited_time"]
+        page_info = json.dumps(page, ensure_ascii=False)
+
+        item = Model.PageInfo(id_, last_edited_time, page_info)
+        self.model.register_page_info(item)
 
 
 class Prompt:
