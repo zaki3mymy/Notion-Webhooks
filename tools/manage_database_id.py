@@ -20,7 +20,7 @@ def main():
     logic = Logic(model)
 
     # ask user_id
-    user_id_env = os.getenv("NOTION_USER_EMAIL")
+    user_id_env = os.getenv("NOTION_USER_EMAIL", "")
     user_id = Prompt.ask_user_id(user_id_env)
 
     # fetch database_id
