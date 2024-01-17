@@ -69,3 +69,17 @@ You have no database settings.
 Registering database info...
 Done.
 ```
+
+Next, register the initial information of the notion database page to be monitored.
+We also recommend using a tool here.
+
+```bash
+python tools/initial_register.py 
+
+? profile? default
+? user_id? user@example.com
+Fetching your registered database ID...
+? Select the database ID you want to operate AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+? Register page information in DB. OK? yes
+Done.                                                                       
+```
