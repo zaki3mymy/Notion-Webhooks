@@ -26,6 +26,18 @@ Notion-Webhooks is made in Python. The dependent library is as follows.
 
 ## Installation
 
+### Settings in Notion
+
+Create a integration to use the Notion API.
+https://www.notion.so/my-integrations
+
+The secret key acquired here will be used later.
+
+Don't forget to add API Connect.
+https://www.notion.so/help/add-and-manage-connections-with-the-api
+
+### Deploy with CDK.
+
 Do deployment using CDK.
 You need to download the dependent library for Lambda Layer before the deployer.
 
@@ -36,9 +48,7 @@ If you execute it, the dependent library will be downloaded to the `./lib/python
 sh download-dependencies.sh
 ```
 
-### Deploy with CDK.
-
-First, prepare CDK with `npm install`.
+Next, prepare CDK with `npm install`.
 
 ```bash
 cd cdk
