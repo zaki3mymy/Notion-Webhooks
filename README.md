@@ -2,6 +2,8 @@
 
 Notion-Webhooks notifies the Notion page change.
 
+![demo](./docs/assets/demo.gif)
+
 ## Description
 
 The motivation for this project is to notify another system for changing the Notion page. When we are using Notion in a free plan, the only action that can be handled by automation is only notification to Slack. You can also notify Teams, Discord or other tools with Notion-Webhooks.
