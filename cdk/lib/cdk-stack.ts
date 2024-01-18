@@ -4,6 +4,7 @@ import * as events from 'aws-cdk-lib/aws-events';
 import * as targets from 'aws-cdk-lib/aws-events-targets';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
+import * as logs from 'aws-cdk-lib/aws-logs';
 import { Construct } from 'constructs';
 import { existsSync } from 'fs';
 
@@ -34,6 +35,13 @@ export class CdkStack extends cdk.Stack {
 
     //////// Common
     const duration = Math.min(900, props.intervalMinutes * 60);
+
+    // CloudWatch
+    const logGroup = new logs.LogGroup(this, "log-group", {
+      logGroupName: `/aws/lambda/${props.projectName}-logs`,
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+      retention: logs.RetentionDays.ONE_YEAR,
+    })
 
     // Lambda Layer
     const lambdaLayer = new lambda.LayerVersion(this, "lambda-layer", {
@@ -104,7 +112,8 @@ export class CdkStack extends cdk.Stack {
         "LOGLEVEL": props.logLevel,
         "TABLE_NAME": dynamodbTablePageInfo.tableName,
       },
-      layers: [lambdaLayer]
+      layers: [lambdaLayer],
+      logGroup: logGroup,
     })
 
     //////// Monitoring
@@ -142,7 +151,8 @@ export class CdkStack extends cdk.Stack {
         "SECRET_KEY": props.notionSecretKey,
         "INTERVAL_MINUTES": String(props.intervalMinutes),
         "LAMBDA_NAME_WEBHOOKS": lambdaWebhooks.functionName,
-      }
+      },
+      logGroup: logGroup,
     })
 
     //////// Orchestration
@@ -185,7 +195,8 @@ export class CdkStack extends cdk.Stack {
         "LOGLEVEL": props.logLevel,
         "TABLE_NAME": dynamodbTableDatabaseId.tableName,
         "LAMBDA_NAME_MONITORING": lambdaMonitoring.functionName,
-      }
+      },
+      logGroup: logGroup,
     })
 
     // EventBridge
