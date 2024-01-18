@@ -1,16 +1,18 @@
 import json
 import os
 from collections import defaultdict
-from logging import getLogger
 from typing import Dict, List
 
 import boto3
+from aws_lambda_powertools import Logger
+from aws_lambda_powertools.utilities.data_classes import EventBridgeEvent
+from aws_lambda_powertools.utilities.typing import LambdaContext
 
 if os.getenv("LOGLEVEL"):
     log_level = os.getenv("LOGLEVEL")
 else:
     log_level = "INFO"
-logger = getLogger(__name__)
+logger = Logger()
 logger.setLevel(log_level)
 
 
