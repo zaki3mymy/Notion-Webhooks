@@ -1,4 +1,5 @@
 import json
+from collections import namedtuple
 
 import boto3
 import pytest
@@ -79,13 +80,25 @@ def add_record(user_id, database_id, url_list):
     )
 
 
-def test_one_database_id_one_url(mock_lambda_client):
+@pytest.fixture
+def lambda_context():
+    lambda_context = {
+        "function_name": "list_items",
+        "memory_limit_in_mb": 128,
+        "invoked_function_arn": "arn:aws:lambda:ap-northeast-1:123456789012:function:lambda",
+        "aws_request_id": "20b4014c-beb2-839ce70cb-470d-13b618e",
+    }
+
+    return namedtuple("LambdaContext", lambda_context.keys())(*lambda_context.values())
+
+
+def test_one_database_id_one_url(mock_lambda_client, lambda_context):
     # prepare
     add_record("user01@example.com", "D001", ["https://www.example01.com"])
 
     # execute
     event = {"user_id": "user01@example.com"}
-    lambda_function(event, {})
+    lambda_function(event, lambda_context)
 
     # verify
     exp = json.dumps(
@@ -94,6 +107,7 @@ def test_one_database_id_one_url(mock_lambda_client):
             "webhooks_url": [
                 "https://www.example01.com",
             ],
+            "request_id": lambda_context.aws_request_id,
         }
     )
     mock_lambda_client.invoke.assert_called_once_with(
@@ -103,7 +117,7 @@ def test_one_database_id_one_url(mock_lambda_client):
     )
 
 
-def test_one_database_id_two_url(mock_lambda_client):
+def test_one_database_id_two_url(mock_lambda_client, lambda_context):
     # prepare
     add_record(
         "user01@example.com",
@@ -113,7 +127,7 @@ def test_one_database_id_two_url(mock_lambda_client):
 
     # execute
     event = {"user_id": "user01@example.com"}
-    lambda_function(event, {})
+    lambda_function(event, lambda_context)
 
     # verify
     exp = json.dumps(
@@ -123,6 +137,7 @@ def test_one_database_id_two_url(mock_lambda_client):
                 "https://www.example01.com",
                 "https://www.example02.com",
             ],
+            "request_id": lambda_context.aws_request_id,
         }
     )
     mock_lambda_client.invoke.assert_called_once_with(
@@ -132,14 +147,14 @@ def test_one_database_id_two_url(mock_lambda_client):
     )
 
 
-def test_two_database_id_two_url(mock_lambda_client):
+def test_two_database_id_two_url(mock_lambda_client, lambda_context):
     # prepare
     add_record("user01@example.com", "D001", ["https://www.example01.com"])
     add_record("user01@example.com", "D002", ["https://www.example02.com"])
 
     # execute
     event = {"user_id": "user01@example.com"}
-    lambda_function(event, {})
+    lambda_function(event, lambda_context)
 
     # verify
     call_args_list = mock_lambda_client.invoke.call_args_list
@@ -153,6 +168,7 @@ def test_two_database_id_two_url(mock_lambda_client):
                 "webhooks_url": [
                     "https://www.example01.com",
                 ],
+                "request_id": lambda_context.aws_request_id,
             }
         ),
     }
@@ -167,6 +183,7 @@ def test_two_database_id_two_url(mock_lambda_client):
                 "webhooks_url": [
                     "https://www.example02.com",
                 ],
+                "request_id": lambda_context.aws_request_id,
             }
         ),
     }

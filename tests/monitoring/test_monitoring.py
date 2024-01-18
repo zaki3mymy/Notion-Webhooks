@@ -1,4 +1,5 @@
 import json
+from collections import namedtuple
 
 import pytest
 from freezegun import freeze_time
@@ -30,8 +31,20 @@ def mock_lambda_client(monkeypatch, mocker: MockerFixture):
     return mock_client
 
 
+@pytest.fixture
+def lambda_context():
+    lambda_context = {
+        "function_name": "list_items",
+        "memory_limit_in_mb": 128,
+        "invoked_function_arn": "arn:aws:lambda:ap-northeast-1:123456789012:function:lambda",
+        "aws_request_id": "67f67f77-c1e4-4ffa-913b-11cfe51d961d",
+    }
+
+    return namedtuple("LambdaContext", lambda_context.keys())(*lambda_context.values())
+
+
 @freeze_time("2024-01-05T03:58:00Z")
-def test_monitoring(mocker, mock_lambda_client):
+def test_monitoring(mocker, mock_lambda_client, lambda_context):
     # prepare
     # mock Notion API
     body = {
@@ -103,14 +116,16 @@ def test_monitoring(mocker, mock_lambda_client):
     event = {
         "database_id": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
         "webhooks_url": ["https://www.example.com"],
+        "request_id": "20b4014c-beb2-839ce70cb-470d-13b618e",
     }
-    lambda_function(event, {})
+    lambda_function(event, lambda_context)
 
     # verify
     exp = json.dumps(
         {
             "webhooks_url": event["webhooks_url"],
             "page_info": body["results"][0],
+            "request_id": event["request_id"],
         }
     )
     mock_lambda_client.invoke.assert_called_once_with(

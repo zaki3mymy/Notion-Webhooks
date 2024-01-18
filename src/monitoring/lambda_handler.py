@@ -81,7 +81,10 @@ def query_database(database_id, filter_conditions):
     return results
 
 
-def lambda_function(event, context):
+@logger.inject_lambda_context
+def lambda_function(event: EventBridgeEvent, context: LambdaContext):
+    logger.structure_logs(append=True, request_id=event.get("request_id"))
+
     logger.info("event: %s", event)
     database_id = event["database_id"]
     webhooks_url = event["webhooks_url"]
@@ -99,7 +102,8 @@ def lambda_function(event, context):
 
         next_event = {
             "webhooks_url": webhooks_url,
-            "page_info": r
+            "page_info": r,
+            "request_id": event.get("request_id"),
         }
 
         client.invoke(

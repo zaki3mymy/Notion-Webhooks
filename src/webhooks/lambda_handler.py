@@ -158,7 +158,10 @@ def send_difference(url, body):
         pass
 
 
-def lambda_function(event, context):
+@logger.inject_lambda_context
+def lambda_function(event: EventBridgeEvent, context: LambdaContext):
+    logger.structure_logs(append=True, request_id=event.get("request_id"))
+
     logger.debug("event: %s", event)
 
     webhooks_url: List[str] = event["webhooks_url"]

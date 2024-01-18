@@ -34,7 +34,10 @@ def _get_database_id_url_dict(user_id: str) -> Dict[str, List[str]]:
     return id_url_dict
 
 
-def lambda_function(event, context):
+@logger.inject_lambda_context
+def lambda_function(event: EventBridgeEvent, context: LambdaContext):
+    logger.structure_logs(append=True, request_id=context.aws_request_id)
+
     logger.info("event: %s", event)
     user_id = event["user_id"]
     lambda_name = os.environ["LAMBDA_NAME_MONITORING"]
@@ -46,6 +49,7 @@ def lambda_function(event, context):
         next_event = {
             "database_id": database_id,
             "webhooks_url": url_list,
+            "request_id": context.aws_request_id,
         }
         logger.debug("invoke with: %s", next_event)
 
