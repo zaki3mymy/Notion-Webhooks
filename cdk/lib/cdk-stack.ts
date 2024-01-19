@@ -152,6 +152,7 @@ export class CdkStack extends cdk.Stack {
         "INTERVAL_MINUTES": String(props.intervalMinutes),
         "LAMBDA_NAME_WEBHOOKS": lambdaWebhooks.functionName,
       },
+      layers: [lambdaLayer],
       logGroup: logGroup,
     })
 
@@ -196,6 +197,7 @@ export class CdkStack extends cdk.Stack {
         "TABLE_NAME": dynamodbTableDatabaseId.tableName,
         "LAMBDA_NAME_MONITORING": lambdaMonitoring.functionName,
       },
+      layers: [lambdaLayer],
       logGroup: logGroup,
     })
 
