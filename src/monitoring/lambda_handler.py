@@ -3,15 +3,17 @@ import os
 import urllib.parse
 import urllib.request
 from datetime import datetime, timedelta, timezone
-from logging import getLogger
 
 import boto3
+from aws_lambda_powertools import Logger
+from aws_lambda_powertools.utilities.data_classes import EventBridgeEvent
+from aws_lambda_powertools.utilities.typing import LambdaContext
 
 if os.getenv("LOGLEVEL"):
     log_level = os.getenv("LOGLEVEL")
 else:
     log_level = "INFO"
-logger = getLogger(__name__)
+logger = Logger()
 logger.setLevel(log_level)
 
 ENDPOINT_ROOT = "https://api.notion.com/v1"
@@ -79,7 +81,10 @@ def query_database(database_id, filter_conditions):
     return results
 
 
-def lambda_function(event, context):
+@logger.inject_lambda_context
+def lambda_function(event: EventBridgeEvent, context: LambdaContext):
+    logger.structure_logs(append=True, request_id=event.get("request_id"))
+
     logger.info("event: %s", event)
     database_id = event["database_id"]
     webhooks_url = event["webhooks_url"]
@@ -97,7 +102,8 @@ def lambda_function(event, context):
 
         next_event = {
             "webhooks_url": webhooks_url,
-            "page_info": r
+            "page_info": r,
+            "request_id": event.get("request_id"),
         }
 
         client.invoke(

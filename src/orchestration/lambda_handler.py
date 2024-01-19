@@ -1,16 +1,18 @@
 import json
 import os
 from collections import defaultdict
-from logging import getLogger
 from typing import Dict, List
 
 import boto3
+from aws_lambda_powertools import Logger
+from aws_lambda_powertools.utilities.data_classes import EventBridgeEvent
+from aws_lambda_powertools.utilities.typing import LambdaContext
 
 if os.getenv("LOGLEVEL"):
     log_level = os.getenv("LOGLEVEL")
 else:
     log_level = "INFO"
-logger = getLogger(__name__)
+logger = Logger()
 logger.setLevel(log_level)
 
 
@@ -32,7 +34,10 @@ def _get_database_id_url_dict(user_id: str) -> Dict[str, List[str]]:
     return id_url_dict
 
 
-def lambda_function(event, context):
+@logger.inject_lambda_context
+def lambda_function(event: EventBridgeEvent, context: LambdaContext):
+    logger.structure_logs(append=True, request_id=context.aws_request_id)
+
     logger.info("event: %s", event)
     user_id = event["user_id"]
     lambda_name = os.environ["LAMBDA_NAME_MONITORING"]
@@ -44,6 +49,7 @@ def lambda_function(event, context):
         next_event = {
             "database_id": database_id,
             "webhooks_url": url_list,
+            "request_id": context.aws_request_id,
         }
         logger.debug("invoke with: %s", next_event)
 

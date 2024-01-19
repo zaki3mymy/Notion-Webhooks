@@ -1,5 +1,6 @@
 import json
 import urllib.request
+from collections import namedtuple
 
 import boto3
 import pytest
@@ -49,6 +50,18 @@ def mock_urllib_request_urlopen(mocker: MockerFixture):
         return mock_urlopen
 
     return func
+
+
+@pytest.fixture
+def lambda_context():
+    lambda_context = {
+        "function_name": "list_items",
+        "memory_limit_in_mb": 128,
+        "invoked_function_arn": "arn:aws:lambda:ap-northeast-1:123456789012:function:lambda",
+        "aws_request_id": "86d7c316-9632-4d82-b4c0-12a65e521f5d",
+    }
+
+    return namedtuple("LambdaContext", lambda_context.keys())(*lambda_context.values())
 
 
 def create_page_info(page_id, last_edited_time):
@@ -107,7 +120,7 @@ def create_page_info(page_id, last_edited_time):
     }
 
 
-def test_no_prev_info(mock_urllib_request_urlopen):
+def test_no_prev_info(mock_urllib_request_urlopen, lambda_context):
     # prepare
     page_id = "d2b8393e-2817-4009-8311-57f9dcac0185"
     last_edited_time = "2024-01-05T03:58:00.000Z"
@@ -120,8 +133,9 @@ def test_no_prev_info(mock_urllib_request_urlopen):
     event = {
         "webhooks_url": ["https://www.example.com"],
         "page_info": page_info,
+        "request_id": "20b4014c-beb2-839ce70cb-470d-13b618e",
     }
-    lambda_function(event, {})
+    lambda_function(event, lambda_context)
 
     # verify
     mock_urlopen.assert_not_called
@@ -139,7 +153,7 @@ def test_no_prev_info(mock_urllib_request_urlopen):
     assert json.dumps(page_info, ensure_ascii=False) == act
 
 
-def test_add_property_from_prev_info(mock_urllib_request_urlopen):
+def test_add_property_from_prev_info(mock_urllib_request_urlopen, lambda_context):
     # prepare
     page_id = "d2b8393e-2817-4009-8311-57f9dcac0185"
     last_edited_time = "2024-01-05T03:58:00.000Z"
@@ -173,8 +187,9 @@ def test_add_property_from_prev_info(mock_urllib_request_urlopen):
     event = {
         "webhooks_url": ["https://www.example.com"],
         "page_info": page_info,
+        "request_id": "20b4014c-beb2-839ce70cb-470d-13b618e",
     }
-    lambda_function(event, {})
+    lambda_function(event, lambda_context)
 
     # verify
     args = mock_urlopen.call_args.args
@@ -216,7 +231,7 @@ def test_add_property_from_prev_info(mock_urllib_request_urlopen):
     assert json.dumps(page_info, ensure_ascii=False) == act
 
 
-def test_change_property_from_prev_info(mock_urllib_request_urlopen):
+def test_change_property_from_prev_info(mock_urllib_request_urlopen, lambda_context):
     # prepare
     page_id = "d2b8393e-2817-4009-8311-57f9dcac0185"
     last_edited_time = "2024-01-05T03:58:00.000Z"
@@ -247,8 +262,9 @@ def test_change_property_from_prev_info(mock_urllib_request_urlopen):
     event = {
         "webhooks_url": ["https://www.example.com"],
         "page_info": page_info,
+        "request_id": "20b4014c-beb2-839ce70cb-470d-13b618e",
     }
-    lambda_function(event, {})
+    lambda_function(event, lambda_context)
 
     # verify
     args = mock_urlopen.call_args.args
@@ -293,7 +309,9 @@ def test_change_property_from_prev_info(mock_urllib_request_urlopen):
     assert json.dumps(page_info, ensure_ascii=False) == act
 
 
-def test_change_property_which_added_multi_select(mock_urllib_request_urlopen):
+def test_change_property_which_added_multi_select(
+    mock_urllib_request_urlopen, lambda_context
+):
     # prepare
     page_id = "d2b8393e-2817-4009-8311-57f9dcac0185"
     last_edited_time = "2024-01-05T03:58:00.000Z"
@@ -325,8 +343,9 @@ def test_change_property_which_added_multi_select(mock_urllib_request_urlopen):
     event = {
         "webhooks_url": ["https://www.example.com"],
         "page_info": page_info,
+        "request_id": "20b4014c-beb2-839ce70cb-470d-13b618e",
     }
-    lambda_function(event, {})
+    lambda_function(event, lambda_context)
 
     # verify
     args = mock_urlopen.call_args.args
@@ -378,7 +397,7 @@ def test_change_property_which_added_multi_select(mock_urllib_request_urlopen):
 
 
 def test_change_property_which_added_multi_select_2(
-    mock_urllib_request_urlopen,
+    mock_urllib_request_urlopen, lambda_context
 ):
     # prepare
     page_id = "d2b8393e-2817-4009-8311-57f9dcac0185"
@@ -418,8 +437,9 @@ def test_change_property_which_added_multi_select_2(
     event = {
         "webhooks_url": ["https://www.example.com"],
         "page_info": page_info,
+        "request_id": "20b4014c-beb2-839ce70cb-470d-13b618e",
     }
-    lambda_function(event, {})
+    lambda_function(event, lambda_context)
 
     # verify
     args = mock_urlopen.call_args.args
@@ -482,7 +502,7 @@ def test_change_property_which_added_multi_select_2(
 
 
 def test_change_property_which_deleted_multi_select(
-    mock_urllib_request_urlopen,
+    mock_urllib_request_urlopen, lambda_context
 ):
     # prepare
     page_id = "d2b8393e-2817-4009-8311-57f9dcac0185"
@@ -516,8 +536,9 @@ def test_change_property_which_deleted_multi_select(
     event = {
         "webhooks_url": ["https://www.example.com"],
         "page_info": page_info,
+        "request_id": "20b4014c-beb2-839ce70cb-470d-13b618e",
     }
-    lambda_function(event, {})
+    lambda_function(event, lambda_context)
 
     # verify
     args = mock_urlopen.call_args.args
@@ -569,7 +590,7 @@ def test_change_property_which_deleted_multi_select(
 
 
 def test_change_property_which_deleted_multi_select_2(
-    mock_urllib_request_urlopen,
+    mock_urllib_request_urlopen, lambda_context
 ):
     # prepare
     page_id = "d2b8393e-2817-4009-8311-57f9dcac0185"
@@ -614,8 +635,9 @@ def test_change_property_which_deleted_multi_select_2(
     event = {
         "webhooks_url": ["https://www.example.com"],
         "page_info": page_info,
+        "request_id": "20b4014c-beb2-839ce70cb-470d-13b618e",
     }
-    lambda_function(event, {})
+    lambda_function(event, lambda_context)
 
     # verify
     args = mock_urlopen.call_args.args
@@ -677,7 +699,7 @@ def test_change_property_which_deleted_multi_select_2(
     assert json.dumps(page_info, ensure_ascii=False) == act
 
 
-def test_delete_property_from_prev_info(mock_urllib_request_urlopen):
+def test_delete_property_from_prev_info(mock_urllib_request_urlopen, lambda_context):
     # prepare
     page_id = "d2b8393e-2817-4009-8311-57f9dcac0185"
     last_edited_time = "2024-01-05T03:58:00.000Z"
@@ -703,8 +725,9 @@ def test_delete_property_from_prev_info(mock_urllib_request_urlopen):
     event = {
         "webhooks_url": ["https://www.example.com"],
         "page_info": page_info,
+        "request_id": "20b4014c-beb2-839ce70cb-470d-13b618e",
     }
-    lambda_function(event, {})
+    lambda_function(event, lambda_context)
 
     # verify
     args = mock_urlopen.call_args.args

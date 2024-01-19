@@ -2,17 +2,19 @@ import json
 import os
 import urllib.request
 from collections import defaultdict
-from logging import getLogger
 from typing import Any, Dict, List, Union
 
 import boto3
+from aws_lambda_powertools import Logger
+from aws_lambda_powertools.utilities.data_classes import EventBridgeEvent
+from aws_lambda_powertools.utilities.typing import LambdaContext
 from deepdiff import DeepDiff, Delta
 
 if os.getenv("LOGLEVEL"):
     log_level = os.getenv("LOGLEVEL")
 else:
     log_level = "INFO"
-logger = getLogger(__name__)
+logger = Logger()
 logger.setLevel(log_level)
 
 
@@ -156,7 +158,10 @@ def send_difference(url, body):
         pass
 
 
-def lambda_function(event, context):
+@logger.inject_lambda_context
+def lambda_function(event: EventBridgeEvent, context: LambdaContext):
+    logger.structure_logs(append=True, request_id=event.get("request_id"))
+
     logger.debug("event: %s", event)
 
     webhooks_url: List[str] = event["webhooks_url"]
