@@ -24,10 +24,11 @@ jobs:
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-${{ github.job }}-packages-${{ hashFiles(format('{0}/{1}', github.workspace, 'requirements.lock')) }}-${{ hashFiles(format('{0}/{1}', github.workspace, 'requirements-dev.lock')) }}
+          restore-keys: |
+            ${{ runner.os }}-${{ github.job }}-packages-
 
       - name: Install dependencies
         run: pip install -r requirements.lock -r requirements-dev.lock
-        if: steps.python-packages-cache.outputs.cache-hit != 'true'
 
       - name: Lint
         run: flake8 src
