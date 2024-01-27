@@ -1,13 +1,16 @@
 name: CD
 
 on:
-  push:
-    branches:
-      - main
+  workflow_run:
+    workflows: ["CI"]
+    branches: [main]
+    types:
+      - completed
 
 jobs:
-  ci:
+  cd:
     runs-on: ubuntu-22.04
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -32,8 +35,22 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Build and Deploy
+      - name: Cache packages
+        id: python-lib-cache
+        uses: actions/cache@v3
+        with:
+          path: ./lib
+          key: ${{ runner.os }}-${{ github.job }}-lib-${{ hashFiles(format('{0}/{1}', github.workspace, 'requirements.lock')) }}
+
+      - name: Install dependencies
         run: |
           sh download-dependencies.sh
+        if: steps.python-lib-cache.outputs.cache-hit != 'true'
+
+      - name: Build and Deploy
+        run: |
           cd cdk/
           cdk deploy
+        env:
+          NOTION_SECRET_KEY: ${{ secrets.NOTION_SECRET_KEY }}
+          NOTION_USER_EMAIL: ${{ secrets.NOTION_USER_EMAIL }}
